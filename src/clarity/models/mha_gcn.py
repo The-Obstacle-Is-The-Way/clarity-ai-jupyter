@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from clarity.training.config import NUM_CLASSES
+from src.clarity.training.config import NUM_CLASSES
 
 
 class SimpleGCNConv(nn.Module):

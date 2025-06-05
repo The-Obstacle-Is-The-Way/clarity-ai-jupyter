@@ -3,7 +3,7 @@ import pywt
 import scipy.signal
 from skimage.transform import resize
 
-from clarity.training.config import FREQ_BANDS, SAMPLING_RATE
+from src.clarity.training.config import FREQ_BANDS, SAMPLING_RATE
 
 
 def calculate_de_features(epoch_data):
