@@ -59,8 +59,8 @@ def _select_channels(raw):
 def _apply_filters(raw):
     """Apply frequency filters to raw data with adaptive parameters.
 
-    Implements frequency filtering with parameters that adapt to the signal length
-    to ensure optimal signal integrity,
+    Implements adaptive filtering with parameters that adjust to signal length
+    to ensure signal integrity,
     for HIPAA-compliant analysis.
 
     Args:
@@ -174,8 +174,8 @@ def preprocess_raw_data(raw):
         # If we have EOG channels, use them to find related ICA components
         eog_indices = _detect_eog_with_channels(raw, ica, eog_channels)
     else:
-        # If no EOG channels are available, try to detect artifacts automatically
-        eog_indices = _detect_eog_automatically(raw, ica)  # Auto detection
+        # If no EOG channels available, try auto-detection
+        eog_indices = _detect_eog_automatically(raw, ica)
     # Apply ICA correction if components were found
     if eog_indices:
         ica.exclude = eog_indices
