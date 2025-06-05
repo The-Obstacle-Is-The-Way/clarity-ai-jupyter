@@ -1,5 +1,6 @@
 import os
 import mne
+import numpy as np
 
 # Import only what's needed at module level to avoid circular imports
 from src.clarity.training.config import SEED
@@ -51,17 +52,45 @@ def preprocess_raw_data(raw):
     )
     ica.fit(raw)
 
-    eog_indices, _ = ica.find_bads_eog(
-        raw, ch_name=["Fp1", "Fp2", "Fpz"], threshold=2.5, verbose=False
-    )
-    if eog_indices:
-        ica.exclude = eog_indices
-        ica.apply(raw)
+    # Check if any EOG channels exist in the raw data
+    possible_eog_channels = ["Fp1", "Fp2", "Fpz", "FP1", "FP2", "FPz"]
+    available_eog_channels = [ch for ch in possible_eog_channels if ch in raw.ch_names]
+    
+    if available_eog_channels:
+        try:
+            # Use only available EOG channels
+            eog_indices, _ = ica.find_bads_eog(
+                raw, ch_name=available_eog_channels, threshold=2.5, verbose=False
+            )
+            if eog_indices:
+                ica.exclude = eog_indices
+                ica.apply(raw)
+            else:
+                print("Warning: No EOG components automatically found using available channels.")
+        except Exception as e:
+            print(f"Warning: Could not detect EOG artifacts: {str(e)}")
     else:
-        print(
-            "Warning: No EOG components automatically found. "
-            "ICA will not remove any components."
-        )
+        # If no EOG channels are available, try to detect artifacts automatically
+        try:
+            # Use automatic detection without specifying EOG channels
+            eog_indices = ica.find_bads_ecg(raw, method='correlation', threshold='auto', verbose=False)[0]
+            if not eog_indices:
+                # Try to use ICA components that look like eye movements based on topography
+                eog_indices = [idx for idx, component in enumerate(ica.get_components()[:8]) 
+                              if np.abs(component[:2].mean()) > np.abs(component[2:].mean())]
+            
+            if eog_indices:
+                ica.exclude = eog_indices
+                ica.apply(raw)
+            else:
+                print("Warning: Could not automatically detect EOG components.")
+        except Exception as e:
+            print(f"Warning: Automatic artifact detection failed: {str(e)}")
+            print("Continuing without EOG artifact removal.")
+    
+    # Log what happened for diagnostic purposes
+    print(f"ICA excluded components: {ica.exclude if hasattr(ica, 'exclude') and ica.exclude else 'None'}")
+
 
     return raw
 

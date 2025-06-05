@@ -84,8 +84,25 @@ def extract_stft_spectrogram_eeg(epoch_data_all_channels, target_size=(224, 224)
 
 
 def compute_adjacency_matrix(epoch_data_all_channels, threshold=0.3):
-    """Computes the Pearson correlation-based adjacency matrix."""
+    """Computes the Pearson correlation-based adjacency matrix with no self-loops.
+    
+    Args:
+        epoch_data_all_channels: EEG data of shape (num_channels, num_timepoints)
+        threshold: Correlation threshold below which connections are set to 0
+        
+    Returns:
+        adj_matrix: Adjacency matrix with zeros on the diagonal (no self-loops)
+    """
+    # Compute Pearson correlation between channels
     adj_matrix = np.corrcoef(epoch_data_all_channels)
+    
+    # Handle NaN values
     adj_matrix[np.isnan(adj_matrix)] = 0
+    
+    # Threshold weak connections
     adj_matrix[np.abs(adj_matrix) < threshold] = 0
+    
+    # Set diagonal to zero (no self-loops)
+    np.fill_diagonal(adj_matrix, 0)
+    
     return adj_matrix
