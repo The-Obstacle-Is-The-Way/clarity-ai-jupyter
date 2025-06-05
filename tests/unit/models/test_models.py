@@ -42,7 +42,8 @@ def test_mha_gcn_forward():
     num_nodes = len(CHANNELS_29)
     
     # Create random input tensors for a single graph
-    node_features = torch.randn(node_feature_dim)
+    # Node features should be of shape (num_nodes, node_feature_dim)
+    node_features = torch.randn(num_nodes, node_feature_dim)
     adj_matrix = torch.randn(num_nodes, num_nodes)
     
     # Make adjacency matrix symmetric as it would be in real usage

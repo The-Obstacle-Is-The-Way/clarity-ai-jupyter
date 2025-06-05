@@ -20,16 +20,38 @@ class SimpleGCNConv(nn.Module):
         Returns:
             Output node features (N, out_channels).
         """
+        # Add self-loops to adjacency matrix (A + I)
         N = adj.size(0)
         identity = torch.eye(N, device=adj.device)
         A_hat = adj + identity
+        
+        # Compute degree matrix D
         D_hat_diag = torch.sum(A_hat, dim=1)
+        
+        # Compute D^(-1/2) with numerical stability safeguards
+        # Add small epsilon to prevent division by zero
+        epsilon = 1e-10
+        D_hat_diag = torch.clamp(D_hat_diag, min=epsilon)  # Ensure positive values
         D_hat_inv_sqrt = torch.pow(D_hat_diag, -0.5)
+        
+        # Safety check for infinity values
         D_hat_inv_sqrt[torch.isinf(D_hat_inv_sqrt)] = 0.0
+        D_hat_inv_sqrt[torch.isnan(D_hat_inv_sqrt)] = 0.0
+        
+        # Create diagonal matrix
         D_inv_sqrt = torch.diag(D_hat_inv_sqrt)
-
+        
+        # Normalized adjacency: D^(-1/2) A D^(-1/2) 
         norm_adj = D_inv_sqrt @ A_hat @ D_inv_sqrt
+        
+        # Check and clean norm_adj for numerical issues
+        norm_adj[torch.isnan(norm_adj)] = 0.0
+        norm_adj[torch.isinf(norm_adj)] = 0.0
+        
+        # Message passing
         support = norm_adj @ x
+        
+        # Linear transformation
         output = self.linear(support)
         return output
 

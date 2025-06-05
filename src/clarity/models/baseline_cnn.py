@@ -12,9 +12,6 @@ class BaselineCNN(nn.Module):
             in_channels: Number of input channels (EEG electrodes).
             num_classes: Number of output classes for classification.
         """
-        # Import constants locally to avoid circular imports
-        from src.clarity.training.config import SAMPLING_RATE, WINDOW_SIZE
-        
         super().__init__()
         self.conv1 = nn.Conv1d(in_channels, 16, kernel_size=3, padding=1)
         self.bn1 = nn.BatchNorm1d(16)
@@ -23,9 +20,9 @@ class BaselineCNN(nn.Module):
         self.bn2 = nn.BatchNorm1d(32)
         self.pool2 = nn.MaxPool1d(2)
 
-        # Calculate flattened size after two MaxPool1d(2) layers
-        self.flattened_size = 32 * (SAMPLING_RATE * WINDOW_SIZE // 4)
-        self.fc1 = nn.Linear(self.flattened_size, 128)
+        # We'll calculate flattened size dynamically in forward pass
+        # Initialize with a placeholder that will be replaced in the first forward pass
+        self.fc1 = None
         self.dropout = nn.Dropout(0.5)
         self.fc2 = nn.Linear(128, num_classes)
 
@@ -40,7 +37,17 @@ class BaselineCNN(nn.Module):
         """
         x = self.pool1(F.relu(self.bn1(self.conv1(x))))
         x = self.pool2(F.relu(self.bn2(self.conv2(x))))
-        x = x.view(-1, self.flattened_size)
+        
+        # Calculate flattened size dynamically based on actual shape after convolutions
+        batch_size = x.size(0)
+        flattened_size = x.size(1) * x.size(2)  # channels * time points after pooling
+        
+        # If fc1 is None or has wrong input size, create a new one
+        if self.fc1 is None or self.fc1.in_features != flattened_size:
+            # Create new fc1 layer with correct size
+            self.fc1 = nn.Linear(flattened_size, 128).to(x.device)
+        
+        x = x.view(batch_size, flattened_size)
         x = F.relu(self.fc1(x))
         x = self.dropout(x)
         x = self.fc2(x)
