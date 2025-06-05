@@ -7,7 +7,10 @@ from skimage.transform import resize
 
 
 def calculate_de_features(epoch_data):
-    """Calculates DE for one epoch across all channels and frequency bands."""
+    """Calculate differential entropy features for each frequency band."""
+    # Import constants locally to avoid circular imports
+    from src.clarity.training.config import FREQ_BANDS, SAMPLING_RATE
+    
     n_channels, n_times = epoch_data.shape
     de_features = np.zeros((n_channels, len(FREQ_BANDS)))
 
