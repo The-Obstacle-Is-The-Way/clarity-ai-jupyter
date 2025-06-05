@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import torch
@@ -16,17 +16,22 @@ from .config import CHANNELS_29, DEVICE, EPOCHS  # Corrected relative import
 class CustomEEGDataset(Dataset):
     """Custom PyTorch Dataset for EEG data.
 
-    Handles feature extraction and data loading for different model types (CNN, MHA-GCN).
+    Handles feature extraction and data loading for different model types.
     """
-    """Custom PyTorch Dataset to handle feature extraction for different models."""
+    # Dataset handles both CNN and MHA-GCN feature extraction
 
-    def __init__(self, subject_ids: List[str], labels_dict: Dict[str, int], model_type: str = "cnn"):
+    def __init__(self,
+        subject_ids: List[str],
+        labels_dict: Dict[str, int],
+        model_type: str = "cnn"
+    ):
         """Initializes the CustomEEGDataset.
 
         Args:
             subject_ids: List of subject identifiers to include in the dataset.
             labels_dict: Dictionary mapping subject IDs to their labels.
-            model_type: Type of model for which data is being prepared ('cnn' or 'mha_gcn').
+            model_type: Type of model for which data is being prepared
+                ('cnn' or 'mha_gcn').
         """
         # Import here to avoid circular imports
         from ..data.modma import load_subject_data, preprocess_raw_data, segment_data
@@ -81,7 +86,10 @@ class CustomEEGDataset(Dataset):
         """Returns the total number of samples in the dataset."""
         return len(self.data)
 
-    def __getitem__(self, idx: int) -> Union[Tuple[torch.Tensor, torch.Tensor], Tuple[torch.Tensor, torch.Tensor, torch.Tensor]]:
+    def __getitem__(self, idx: int) -> Union[
+        Tuple[torch.Tensor, torch.Tensor],
+        Tuple[Tuple[torch.Tensor, torch.Tensor], torch.Tensor]
+    ]:
         """Retrieves a sample from the dataset at the given index.
 
         Args:
@@ -101,10 +109,10 @@ class CustomEEGDataset(Dataset):
         elif self.model_type == "mha_gcn":
             dwt_features, adj_matrix = data_point
             dwt_flat = dwt_features.reshape(dwt_features.shape[0], -1)
+            # Return as a tuple of (inputs, label) where inputs is also a tuple
             return (
-                torch.FloatTensor(dwt_flat),
-                torch.FloatTensor(adj_matrix),
-                torch.tensor(label, dtype=torch.long),
+                (torch.FloatTensor(dwt_flat), torch.FloatTensor(adj_matrix)),
+                torch.tensor(label, dtype=torch.long)
             )
 
         # Fallback, should ideally not be reached if model_type is always cnn or mha_gcn
@@ -216,7 +224,17 @@ def evaluate_model(
                 all_labels.extend(labels)
 
     accuracy = float(accuracy_score(all_labels, all_preds))
-    precision = float(precision_score(all_labels, all_preds, average="macro", zero_division="warn"))
-    recall = float(recall_score(all_labels, all_preds, average="macro", zero_division="warn"))
+    precision = float(precision_score(
+        all_labels, all_preds, average="macro", zero_division="warn"
+    ))
+    recall = float(recall_score(
+        all_labels, all_preds, average="macro", zero_division="warn"
+    ))
     f1 = float(f1_score(all_labels, all_preds, average="macro", zero_division="warn"))
+    print(
+        f"Epoch metrics - "
+        f"Accuracy: {accuracy:.4f}, "
+        f"Precision: {precision:.4f}, "
+        f"Recall: {recall:.4f}, F1: {f1:.4f}"
+    )
     return accuracy, precision, recall, f1
