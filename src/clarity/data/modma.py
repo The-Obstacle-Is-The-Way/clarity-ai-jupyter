@@ -88,7 +88,7 @@ def _detect_eog_automatically(raw, ica):
         eog_indices = ica.find_bads_ecg(
             raw, method='correlation', threshold='auto', verbose=False
         )[0]
-        
+
         if not eog_indices:
             # Topography-based approach as fallback
             components = ica.get_components()[:8]
@@ -98,10 +98,10 @@ def _detect_eog_automatically(raw, ica):
                 back_mean = np.abs(component[2:].mean())
                 if front_mean > back_mean:
                     eog_indices.append(idx)
-                    
+
         if not eog_indices:
             print("Warning: Could not automatically detect EOG components.")
-            
+
         return eog_indices
     except Exception as e:
         print("Warning: Automatic artifact detection failed: {}".format(str(e)))
@@ -115,7 +115,7 @@ def preprocess_raw_data(raw):
     functions for each step in the process.
     Args:
         raw: Raw MNE object containing EEG data
-        
+
     Returns:
         Preprocessed MNE Raw object
     """
@@ -173,7 +173,8 @@ def segment_data(raw) -> list:
     )
 
     # Convert MNE Epochs to a list of numpy arrays as expected by the test
-    # Tests expect each epoch to have shape (1, n_channels, n_times) - adding the trial dimension
+    # Tests expect each epoch to have shape (1, n_channels, n_times)
+    # Adding the trial dimension
     # Add a trial dimension (batch size of 1) to each epoch
     data = mne_epochs.get_data()
     epochs_list = []
