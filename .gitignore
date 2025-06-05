@@ -1,22 +1,28 @@
-# Python
+# Test artifacts
 __pycache__/
+.pytest_cache/
+coverage_report/
+.coverage
+htmlcov/
 *.pyc
 *.pyo
-*.pyd
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Environment
 .venv/
 venv/
 env/
-*.egg-info/
+.env
+
+# Build artifacts
 dist/
 build/
+*.egg-info/
 
-# Jupyter Notebook
+# Jupyter artifacts
 .ipynb_checkpoints/
-
-# Data
-data/
-*.tar.gz
-*.zip
-
-# Environment variables
-.env 

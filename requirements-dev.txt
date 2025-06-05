@@ -1,0 +1,21 @@
+# Testing dependencies
+pytest==7.4.0
+pytest-cov==4.1.0
+pytest-mock==3.11.1
+pytest-xdist==3.3.1
+
+# Code quality tools
+ruff==0.0.285
+pyright==1.1.320
+
+# Documentation
+sphinx==6.2.1  # Using a version compatible with sphinx-rtd-theme
+sphinx-rtd-theme==1.2.2
+
+# Development tools
+pre-commit==3.3.3
+black==23.7.0
+isort==5.12.0
+
+# Dependencies from main project (reference these from requirements.txt in your setup)
+-r requirements.txt
