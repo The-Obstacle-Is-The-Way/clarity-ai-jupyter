@@ -23,8 +23,8 @@ class SimpleGCNConv(nn.Module):
             Output node features (N, out_channels).
         """
         N = adj.size(0)
-        I = torch.eye(N, device=adj.device)
-        A_hat = adj + I
+        identity = torch.eye(N, device=adj.device)
+        A_hat = adj + identity
         D_hat_diag = torch.sum(A_hat, dim=1)
         D_hat_inv_sqrt = torch.pow(D_hat_diag, -0.5)
         D_hat_inv_sqrt[torch.isinf(D_hat_inv_sqrt)] = 0.0

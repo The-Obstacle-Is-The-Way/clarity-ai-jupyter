@@ -1,14 +1,10 @@
 """Clarity: EEG Analysis Toolkit
 
-This package provides tools for EEG data processing, feature extraction, 
+This package provides tools for EEG data processing, feature extraction,
 model training, and visualization for depression detection research.
 """
 
-from . import data
-from . import features
-from . import models
-from . import training
-from . import viz
+from . import data, features, models, training, viz
 
 __all__ = [
     "data",

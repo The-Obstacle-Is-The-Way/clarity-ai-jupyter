@@ -15,26 +15,33 @@
 
 # %%
 # CELL 1: Imports
+import matplotlib.pyplot as plt
+import mne
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from ipywidgets import interact
 from sklearn.model_selection import LeaveOneOut
 from torch.utils.data import DataLoader
 from tqdm.notebook import tqdm
-import matplotlib.pyplot as plt
-from ipywidgets import interact
-import mne
+
+from src.clarity.data.modma import load_subject_data, preprocess_raw_data, segment_data
+from src.clarity.features import calculate_de_features
+from src.clarity.models import MHA_GCN, BaselineCNN
 
 # Local imports from our library
 # Ensure 'src' is in PYTHONPATH or the notebook is run from project root
 from src.clarity.training.config import (
-    SEED, DEVICE, NUM_SUBJECTS, BATCH_SIZE, EPOCHS, LR, FREQ_BANDS
+    BATCH_SIZE,
+    DEVICE,
+    EPOCHS,
+    FREQ_BANDS,
+    LR,
+    NUM_SUBJECTS,
+    SEED,
 )
-from src.clarity.data.modma import load_subject_data, preprocess_raw_data, segment_data
-from src.clarity.features import calculate_de_features
-from src.clarity.training.loop import CustomEEGDataset, train_model, evaluate_model
-from src.clarity.models import BaselineCNN, MHA_GCN
+from src.clarity.training.loop import CustomEEGDataset, evaluate_model, train_model
 
 # %% [markdown]
 # ### Cell 2: Setup & Configuration
@@ -70,38 +77,38 @@ for fold, (train_indices, test_indices) in tqdm(
 ):
     train_subject_ids = [subject_ids_all[i] for i in train_indices]
     test_subject_ids = [subject_ids_all[i] for i in test_indices]
-    
+
     print(
         f"\nFold {fold + 1}/{len(subject_ids_all)}: "
         f"Testing on subject {test_subject_ids[0]}"
     )
-    
+
     train_dataset = CustomEEGDataset(train_subject_ids, labels_dict, model_type=MODEL_TO_RUN)
     test_dataset = CustomEEGDataset(test_subject_ids, labels_dict, model_type=MODEL_TO_RUN)
-    
+
     if len(train_dataset) == 0 or len(test_dataset) == 0:
         print(f"Skipping fold {fold+1} due to missing data.")
         continue
-        
+
     train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
-    
+
     if MODEL_TO_RUN == "cnn":
         model = BaselineCNN()
     elif MODEL_TO_RUN == "mha_gcn":
         model = MHA_GCN(node_feature_dim=15 * 180)
     else:
         raise ValueError(f"Unsupported MODEL_TO_RUN: {MODEL_TO_RUN}. Choose 'cnn' or 'mha_gcn'.")
-    
+
     optimizer = optim.Adam(model.parameters(), lr=LR)
     criterion = nn.CrossEntropyLoss()
-    
+
     print("Training...")
     model = train_model(model, train_loader, optimizer, criterion, model_type=MODEL_TO_RUN, epochs=EPOCHS)
-    
+
     print("Evaluating...")
     acc, prec, rec, f1 = evaluate_model(model, test_loader, model_type=MODEL_TO_RUN)
-    
+
     print(f"Fold {fold+1} Results: Accuracy={acc:.4f}, F1={f1:.4f}")
     results['accuracy'].append(acc)
     results['precision'].append(prec)
@@ -147,13 +154,13 @@ def plot_topomap_for_band(band_name: str):
     if info_for_topo is None:
         print("Sample data not loaded. Cannot plot.")
         return
-        
+
     all_de = [calculate_de_features(epoch) for epoch in epochs_sample]
     avg_de_all_bands = np.mean(all_de, axis=0)
-    
+
     band_idx = list(FREQ_BANDS.keys()).index(band_name)
     de_to_plot = avg_de_all_bands[:, band_idx]
-    
+
     fig, ax = plt.subplots(figsize=(6, 6))
     im, _ = mne.viz.plot_topomap(de_to_plot, info_for_topo, axes=ax, show=False, cmap='viridis')
     fig.colorbar(im, ax=ax)

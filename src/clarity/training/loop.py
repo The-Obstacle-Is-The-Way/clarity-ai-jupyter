@@ -1,17 +1,16 @@
-from typing import List, Dict, Tuple, Union, Any
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim
-import mne
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 from tqdm.notebook import tqdm
 
-from .config import CHANNELS_29, DEVICE, EPOCHS  # Corrected relative import
 from ..data.modma import load_subject_data, preprocess_raw_data, segment_data
 from ..features import compute_adjacency_matrix, extract_dwt_features
+from .config import CHANNELS_29, DEVICE, EPOCHS  # Corrected relative import
 
 
 class CustomEEGDataset(Dataset):

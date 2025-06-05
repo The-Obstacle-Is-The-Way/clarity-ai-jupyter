@@ -1,7 +1,7 @@
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import torch
 from clarity.training.config import CHANNELS_29, NUM_CLASSES, SAMPLING_RATE, WINDOW_SIZE
 
 
