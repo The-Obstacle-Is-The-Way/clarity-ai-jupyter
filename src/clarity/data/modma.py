@@ -7,6 +7,9 @@ from src.clarity.training.config import SEED
 
 def load_subject_data(subject_id):
     """Loads EEG data for a single subject from the MODMA dataset."""
+    # Import here to avoid circular imports
+    from src.clarity.training.config import DATA_DIR
+    
     file_path = os.path.join(
         DATA_DIR, f"EEG_128channel_resting/sub{subject_id:02d}/rest.set"
     )
@@ -22,6 +25,9 @@ def load_subject_data(subject_id):
 
 def preprocess_raw_data(raw):
     """Applies channel selection, filtering, and ICA to the raw MNE object."""
+    # Import here to avoid circular imports
+    from src.clarity.training.config import CHANNELS_29
+    
     channel_mapping = {"Fpz": "FPz", "Iz": "I"}
     mapped_channels = []
     for ch in CHANNELS_29:
@@ -59,6 +65,9 @@ def preprocess_raw_data(raw):
 
 def segment_data(raw) -> mne.Epochs:
     """Segments preprocessed data into 2s windows with 50% overlap."""
+    # Import here to avoid circular imports
+    from src.clarity.training.config import WINDOW_SIZE, OVERLAP
+    
     epochs = mne.make_fixed_length_epochs(
         raw,
         duration=WINDOW_SIZE,
