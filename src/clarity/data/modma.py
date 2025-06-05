@@ -125,7 +125,8 @@ def preprocess_raw_data(raw):
     raw = _apply_filters(raw)
     # Step 3: Apply ICA for artifact removal (primarily EOG)
     # Dynamically set n_components to be min(20, num_channels)
-    n_components = min(20, len(raw.ch_names))
+    # Subtract 1 to ensure it's always less than the number of channels
+    n_components = min(len(raw.ch_names) - 1, 20)
     # Initialize ICA with fixed random seed for reproducibility
     ica = mne.preprocessing.ICA(
         n_components=n_components,
