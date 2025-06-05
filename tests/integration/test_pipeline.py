@@ -30,6 +30,13 @@ def test_full_cnn_pipeline(sample_eeg_data, subject_labels):
             self.labels = labels
             self.model_type = "cnn"
             
+        def __getitem__(self, idx):
+            # For CNN model, reshape to remove the extra dimension and get to shape (channels, time_points)
+            if self.model_type == "cnn":
+                # Convert to float32 to match model parameter dtype and remove the first dimension
+                return torch.tensor(self.data[idx].squeeze(0), dtype=torch.float32), self.labels[idx]
+            return self.data[idx], self.labels[idx]
+            
     # Create a small dataset with the epochs data
     data_points = []
     labels = []
@@ -44,8 +51,9 @@ def test_full_cnn_pipeline(sample_eeg_data, subject_labels):
     batch_size = 2
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
     
-    # Step 4: Initialize model
-    model = BaselineCNN()
+    # Step 4: Initialize model with correct number of channels from data
+    num_channels = data_points[0].shape[1]  # Get channel count from first epoch
+    model = BaselineCNN(in_channels=num_channels)
     
     # Step 5: Setup optimizer and loss function
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
