@@ -64,7 +64,8 @@ DEPRESSION_LEVELS = {
     "Moderate to Major": (15, 19),
     "Major": (20, 27),
 }  # Mapping of BDI-II scores to depression severity levels
-NUM_CLASSES = 2  # Number of classes for the classification task (e.g., 2 for depressed/control)
+# Number of classes for classification (depressed/control)
+NUM_CLASSES = 2
 BATCH_SIZE = 4
 EPOCHS = 100
 LR = 0.001  # Learning rate for the optimizer
