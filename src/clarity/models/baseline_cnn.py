@@ -1,3 +1,5 @@
+from typing import Optional
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -22,7 +24,7 @@ class BaselineCNN(nn.Module):
 
         # We'll calculate flattened size dynamically in forward pass
         # Initialize with a placeholder that will be replaced in the first forward pass
-        self.fc1 = None
+        self.fc1: Optional[nn.Linear] = None
         self.dropout = nn.Dropout(0.5)
         self.fc2 = nn.Linear(128, num_classes)
 

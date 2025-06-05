@@ -85,7 +85,11 @@ class MHA_GCN(nn.Module):
 
         self.fc_out = nn.Linear(gcn2_out, num_classes)
 
-    def forward(self, node_features: torch.Tensor, adj_matrix: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        node_features: torch.Tensor,
+        adj_matrix: torch.Tensor
+    ) -> torch.Tensor:
         """Defines the forward pass of the MHA-GCN model.
 
         This implementation assumes processing one graph at a time.
@@ -98,7 +102,8 @@ class MHA_GCN(nn.Module):
         Returns:
             Output tensor of shape (num_classes,).
         """
-        # This implementation assumes batch processing is handled outside or by a wrapper.
+        # This implementation assumes batch processing is handled outside
+        # or by a wrapper.
         # It processes one graph at a time.
 
         # First GCN layer with ReLU activation
