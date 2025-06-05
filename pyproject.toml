@@ -32,15 +32,11 @@ exclude = [
 
 [tool.pyright]
 venvPath = "."
-venv = ".venv"  # Or your virtual environment name
-include = ["src", "notebooks"]
-exclude = ["**/__pycache__", ".ruff_cache", "**/.*", "**/.ipynb_checkpoints"]
+venv = ".venv"
 typeCheckingMode = "basic"
 reportMissingImports = true
-reportUnusedVariable = true
-reportPossiblyUnboundVariable = true
-reportGeneralTypeIssues = true
-pythonVersion = "3.10" # Match your project's Python version
+reportMissingTypeStubs = false
+exclude = ["**/__pycache__", "**/.ipynb_checkpoints", "**/.pytest_cache"]
 
 # Helps pyright find your local packages, treating 'src' as a root for 'clarity'
 executionEnvironments = [

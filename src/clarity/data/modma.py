@@ -132,7 +132,11 @@ def preprocess_raw_data(raw):
     ica.fit(raw, verbose=False)
     # Step 4: Detect and remove artifacts
     # First check if we have EOG channels in the data
-    eog_channels = [ch for ch in raw.ch_names if 'EOG' in ch or 'eog' in ch]
+    # Check for EOG channels in data
+    eog_channels = []
+    for ch in raw.ch_names:
+        if 'EOG' in ch or 'eog' in ch:
+            eog_channels.append(ch)
     if eog_channels:
         # If we have EOG channels, use them to find related ICA components
         eog_indices = _detect_eog_with_channels(raw, ica, eog_channels)
