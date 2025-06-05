@@ -2,7 +2,7 @@ import os
 
 import mne
 
-from clarity.training.config import CHANNELS_29, DATA_DIR, OVERLAP, SEED, WINDOW_SIZE
+from src.clarity.training.config import CHANNELS_29, DATA_DIR, OVERLAP, SEED, WINDOW_SIZE
 
 
 def load_subject_data(subject_id):

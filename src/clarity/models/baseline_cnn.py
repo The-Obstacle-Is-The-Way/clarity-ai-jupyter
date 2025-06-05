@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from clarity.training.config import CHANNELS_29, NUM_CLASSES, SAMPLING_RATE, WINDOW_SIZE
+from src.clarity.training.config import CHANNELS_29, NUM_CLASSES, SAMPLING_RATE, WINDOW_SIZE
 
 
 class BaselineCNN(nn.Module):
