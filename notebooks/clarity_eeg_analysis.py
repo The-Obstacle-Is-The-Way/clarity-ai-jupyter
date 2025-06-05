@@ -143,11 +143,18 @@ try:
     if raw_sample:
         raw_sample_p = preprocess_raw_data(raw_sample.copy())
         epochs_sample = segment_data(raw_sample_p)
-        info_for_topo = epochs_sample.info
+        info_for_topo = epochs_sample[0].info if epochs_sample else None
+        # Keep sample_subj_id in global scope for use in plot function
+        global sample_subj_id_for_plots
+        sample_subj_id_for_plots = sample_subj_id
     else:
         info_for_topo = None
+        epochs_sample = []
+        sample_subj_id_for_plots = 0
 except Exception:
     info_for_topo = None
+    epochs_sample = []
+    sample_subj_id_for_plots = 0
 
 def plot_topomap_for_band(band_name: str):
     if info_for_topo is None:
@@ -165,7 +172,7 @@ def plot_topomap_for_band(band_name: str):
     fig.colorbar(im, ax=ax)
     ax.set_title(
         f"Differential Entropy Topomap for {band_name.capitalize()} Band "
-        f"(Subject {sample_subj_id})"
+        f"(Subject {sample_subj_id_for_plots})"
     )
     plt.show()
 
