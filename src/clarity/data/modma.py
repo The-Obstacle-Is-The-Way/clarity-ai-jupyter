@@ -41,6 +41,9 @@ def preprocess_raw_data(raw):
             mapped_channels.append(channel_mapping[ch])
     raw.pick_channels(mapped_channels, ordered=True)
 
+    # Make a copy to ensure we're not modifying the original data
+    raw = raw.copy()
+    # Apply filtering
     raw.filter(l_freq=1.0, h_freq=40.0, fir_design="firwin", verbose=False)
 
     n_components_ica = len(raw.ch_names) - 1
@@ -52,9 +55,11 @@ def preprocess_raw_data(raw):
     )
     ica.fit(raw)
 
-    # Check if any EOG channels exist in the raw data
-    possible_eog_channels = ["Fp1", "Fp2", "Fpz", "FP1", "FP2", "FPz"]
-    available_eog_channels = [ch for ch in possible_eog_channels if ch in raw.ch_names]
+    # Define EOG channels to check for
+    EOG_CHANNELS = ["Fp1", "Fp2", "Fpz"]
+    
+    # Check which EOG channels are available
+    available_eog_channels = [ch for ch in EOG_CHANNELS if ch in raw.ch_names]
     
     if available_eog_channels:
         try:
@@ -114,6 +119,7 @@ def segment_data(raw) -> list:
     )
     
     # Convert MNE Epochs to a list of numpy arrays as expected by the test
-    epochs_list = [epoch for epoch in mne_epochs.get_data()]
+    # Tests expect each epoch to have shape (1, n_channels, n_times) - adding the trial dimension
+    epochs_list = [epoch[np.newaxis, :, :] for epoch in mne_epochs.get_data()]
     
     return epochs_list
