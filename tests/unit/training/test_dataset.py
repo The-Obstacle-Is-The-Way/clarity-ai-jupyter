@@ -76,13 +76,14 @@ def test_custom_eeg_dataset_getitem_mha_gcn(subject_labels):
     dataset.labels = [1, 0, 1]
     
     # Get an item
-    data_tuple, label = dataset[1]
-    dwt_features, adj_matrix = data_tuple
+    dwt_features, adj_matrix, label = dataset[1]
+    # Note: CustomEEGDataset.__getitem__ returns a 3-tuple for mha_gcn: (features, adj_matrix, label)
     
     # Check types and shapes
     assert isinstance(dwt_features, torch.Tensor)
     assert isinstance(adj_matrix, torch.Tensor)
     assert isinstance(label, torch.Tensor)
-    assert dwt_features.dim() == 1  # Flattened features for one node
-    assert adj_matrix.shape == (29, 29)
-    assert label.item() == 0
+    assert dwt_features.dim() == 2  # Features reshaped but not completely flattened
+    assert adj_matrix.shape == (29, 29)  # Adjacency matrix
+    assert label.dtype == torch.long
+    assert label.item() == 0  # Index 1 corresponds to label 0 in our mock data
