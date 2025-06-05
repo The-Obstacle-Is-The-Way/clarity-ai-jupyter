@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 import torch
@@ -142,7 +142,12 @@ def train_model(
                 labels = labels.to(DEVICE)
             else:
                 inputs, labels = data
-                inputs, labels = inputs.to(DEVICE), labels.to(DEVICE)
+                # Handle inputs which could be a tensor or a tuple of tensors
+                if isinstance(inputs, tuple):
+                    inputs = tuple(t.to(DEVICE) for t in inputs)
+                else:
+                    inputs = inputs.to(DEVICE)
+                labels = labels.to(DEVICE)
 
             optimizer.zero_grad()
 
@@ -189,7 +194,11 @@ def evaluate_model(
                 inputs = (dwt.to(DEVICE), adj.to(DEVICE))
             else:
                 inputs, labels = data
-                inputs = inputs.to(DEVICE)
+                # Handle inputs which could be a tensor or a tuple of tensors
+                if isinstance(inputs, tuple):
+                    inputs = tuple(t.to(DEVICE) for t in inputs)
+                else:
+                    inputs = inputs.to(DEVICE)
 
             labels = labels.cpu().numpy()
 

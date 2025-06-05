@@ -4,8 +4,6 @@ import mne
 import numpy as np
 
 # Import only what's needed at module level to avoid circular imports
-from ...clarity.training.config import SEED
-
 
 def load_subject_data(subject_id):
     """Loads EEG data for a single subject from the MODMA dataset."""
@@ -56,7 +54,8 @@ def _apply_filters(raw):
         MNE Raw object with filters applied.
     """
     # Apply basic filters
-    raw.filter(l_freq=0.5, h_freq=50.0, n_jobs=1, verbose=False)
+    raw = raw.copy().filter(l_freq=1, h_freq=None)
+    raw.events_from_annotations(event_id="auto", chunk_duration=2.0)
     raw.notch_filter(freqs=50, n_jobs=1, verbose=False)  # Remove line noise
     return raw
 
@@ -120,15 +119,13 @@ def preprocess_raw_data(raw):
         Preprocessed MNE Raw object
     """
     # Import here to avoid circular imports
-#    No imports needed here - using helper functions
+    # No imports needed here - using helper functions
     # Step 1: Select channels
     raw = _select_channels(raw)
     # Step 2: Apply filters
     raw = _apply_filters(raw)
-    # Step 3: Apply ICA for artifact removal
-    ica = mne.preprocessing.ICA(
-        n_components=15, random_state=SEED, verbose=False
-    )
+    # Step 3: Apply ICA for artifact removal (primarily EOG)
+    ica = mne.preprocessing.ICA(n_components=20, random_state=97)  # SEED, verbose=False
     ica.fit(raw, verbose=False)
     # Step 4: Detect and remove artifacts
     # First check if we have EOG channels in the data
@@ -163,8 +160,9 @@ def segment_data(raw) -> list:
     # Import here to avoid circular imports
     from ...clarity.training.config import OVERLAP, WINDOW_SIZE
 
-    # Create epochs using MNE's fixed length epoch function
-    mne_epochs = mne.make_fixed_length_epochs(
+    # Now segment into epochs
+    epochs = raw.events_from_annotations(event_id="auto", chunk_duration=2.0)
+    epochs = mne.make_fixed_length_epochs(
         raw,
         duration=WINDOW_SIZE,
         overlap=WINDOW_SIZE * OVERLAP,
@@ -176,7 +174,7 @@ def segment_data(raw) -> list:
     # Tests expect each epoch to have shape (1, n_channels, n_times)
     # Adding the trial dimension
     # Add a trial dimension (batch size of 1) to each epoch
-    data = mne_epochs.get_data()
+    data = epochs.get_data()
     epochs_list = []
     for epoch in data:
         # Reshape to (1, n_channels, n_times)
