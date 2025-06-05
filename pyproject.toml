@@ -3,7 +3,6 @@
 line-length = 88
 # Assume Python 3.10+
 target-version = "py310"
-
 # A good starting set of rules:
 # E, F: standard pyflakes errors/warnings
 # W: pycodestyle warnings
@@ -11,6 +10,18 @@ target-version = "py310"
 # C90: mccabe complexity checks
 select = ["E", "F", "W", "I", "C90"]
 ignore = []
+# Configure isort rules under ruff
+src = ["src", "tests"]
+exclude = [
+    ".git",
+    ".ruff_cache",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".venv",
+    "*.pyc",
+    "dist"
+]
 
 
 [tool.pyright]
