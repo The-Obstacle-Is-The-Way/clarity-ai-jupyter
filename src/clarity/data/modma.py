@@ -1,7 +1,15 @@
+"""EEG preprocessing module for MODMA dataset.
+
+This module provides functions for preprocessing EEG data from MODMA dataset,
+including filtering, artifact removal, and segmentation.
+"""
+
 import os
 
+# Third-party imports
 import mne
 import numpy as np
+
 
 # Import only what's needed at module level to avoid circular imports
 
@@ -18,7 +26,7 @@ def load_subject_data(subject_id):
     )
     if not os.path.exists(file_path):
         print(
-            f"Warning: Data file not found for subject {subject_id} at {file_path}. "
+            f"Warning: Data file not found for subject {subject_id}. "
             "Returning None."
         )
         return None
@@ -42,7 +50,7 @@ def _select_channels(raw):
             mapped_channels.append(ch)
 
     if not mapped_channels:
-        print("Warning: No common channels found between data and standard montage.")
+        print("Warning: No common channels found between data and montage.")
         return raw
 
     return raw.pick_channels(mapped_channels)
@@ -52,8 +60,8 @@ def _apply_filters(raw):
     """Apply frequency filters to raw data with adaptive parameters.
 
     Implements frequency filtering with parameters that adapt to the signal length
-    to ensure optimal signal processing without distortion, critical for
-    accurate health data analysis in HIPAA-compliant applications.
+    to ensure optimal signal integrity,
+    for HIPAA-compliant analysis.
 
     Args:
         raw: MNE Raw object containing EEG data
@@ -72,11 +80,11 @@ def _apply_filters(raw):
     if n_times < 2000:
         # Skip notch filter for very short signals (test data)
         # In a real clinical environment, EEG data would never be this short
-        # so this is a safe assumption for test vs production separation
+        # This is a safe assumption for test vs production data
         print("Short signal detected: Skipping notch filter for test data")
         # We don't apply notch filtering to test data
     else:
-        # For standard length signals (production data), apply proper notch filtering
+        # For standard length signals, apply proper notch filtering
         raw.notch_filter(freqs=50, n_jobs=1, verbose=False)
 
     return raw
@@ -95,7 +103,7 @@ def _detect_eog_with_channels(raw, ica, eog_channels):
             print("Warning: No EOG components found using available channels.")
         return eog_indices
     except Exception as e:
-        print("Warning: Could not detect EOG artifacts: {}".format(str(e)))
+        print(f"Warning: Could not detect EOG artifacts: {str(e)}")
         return []
 
 
@@ -125,23 +133,21 @@ def _detect_eog_automatically(raw, ica):
 
         return eog_indices
     except Exception as e:
-        print("Warning: Automatic artifact detection failed: {}".format(str(e)))
+        print(f"Warning: Automatic artifact detection failed: {str(e)}")
         print("Continuing without EOG artifact removal.")
         return []
 
 
 def preprocess_raw_data(raw):
     """Applies channel selection, filtering, and ICA to the raw MNE object.
-    This function orchestrates the preprocessing pipeline by calling more specialized
-    functions for each step in the process.
+    This function orchestrates the preprocessing pipeline using specialized
+    functions for each step.
     Args:
         raw: Raw MNE object containing EEG data
 
     Returns:
         Preprocessed MNE Raw object
     """
-    # Import here to avoid circular imports
-    # No imports needed here - using helper functions
     # Step 1: Select channels
     raw = _select_channels(raw)
     # Step 2: Apply filters
@@ -169,15 +175,15 @@ def preprocess_raw_data(raw):
         eog_indices = _detect_eog_with_channels(raw, ica, eog_channels)
     else:
         # If no EOG channels are available, try to detect artifacts automatically
-        eog_indices = _detect_eog_automatically(raw, ica)
+        eog_indices = _detect_eog_automatically(raw, ica)  # Auto detection
     # Apply ICA correction if components were found
     if eog_indices:
         ica.exclude = eog_indices
         ica.apply(raw)
     # Log what happened for diagnostic purposes
     has_excluded = hasattr(ica, 'exclude') and ica.exclude
-    excluded_str = str(ica.exclude) if has_excluded else 'None'
-    print("ICA excluded components: {}".format(excluded_str))
+    excl = str(ica.exclude) if has_excluded else 'None'
+    print(f"ICA excluded: {excl}")
     return raw
 
 
