@@ -10,6 +10,9 @@ def load_subject_data(subject_id):
     # Import here to avoid circular imports
     from src.clarity.training.config import DATA_DIR
     
+    # Convert subject_id to int if it's a string
+    subject_id = int(subject_id) if isinstance(subject_id, str) else subject_id
+    
     file_path = os.path.join(
         DATA_DIR, f"EEG_128channel_resting/sub{subject_id:02d}/rest.set"
     )

@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from torch.utils.data import DataLoader, Dataset
 from tqdm.notebook import tqdm
 
-from ..data.modma import load_subject_data, preprocess_raw_data, segment_data
+# Import data functions inside methods to avoid circular imports
 from ..features import compute_adjacency_matrix, extract_dwt_features
 from .config import CHANNELS_29, DEVICE, EPOCHS  # Corrected relative import
 
@@ -28,6 +28,9 @@ class CustomEEGDataset(Dataset):
             labels_dict: Dictionary mapping subject IDs to their labels.
             model_type: Type of model for which data is being prepared ('cnn' or 'mha_gcn').
         """
+        # Import here to avoid circular imports
+        from ..data.modma import load_subject_data, preprocess_raw_data, segment_data
+        
         self.subject_ids = subject_ids
         self.labels_dict = labels_dict
         self.model_type = model_type

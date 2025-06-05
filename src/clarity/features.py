@@ -45,6 +45,9 @@ def extract_dwt_features(epoch_data_single_channel):
 
 def extract_stft_spectrogram_eeg(epoch_data_all_channels, target_size=(224, 224)):
     """Creates a 3-channel 224x224 spectrogram image from a 2s EEG window."""
+    # Import constants locally to avoid circular imports
+    from src.clarity.training.config import SAMPLING_RATE
+    
     n_channels, _n_times = epoch_data_all_channels.shape
     nperseg = 32
     noverlap = nperseg // 2

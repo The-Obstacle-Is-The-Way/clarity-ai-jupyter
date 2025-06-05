@@ -2,18 +2,19 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from src.clarity.training.config import CHANNELS_29, NUM_CLASSES, SAMPLING_RATE, WINDOW_SIZE
-
 
 class BaselineCNN(nn.Module):
     """A baseline 1D CNN model for EEG signal classification."""
-    def __init__(self, in_channels: int = len(CHANNELS_29), num_classes: int = NUM_CLASSES):
+    def __init__(self, in_channels: int = 29, num_classes: int = 4):
         """Initializes the BaselineCNN model.
 
         Args:
             in_channels: Number of input channels (EEG electrodes).
             num_classes: Number of output classes for classification.
         """
+        # Import constants locally to avoid circular imports
+        from src.clarity.training.config import SAMPLING_RATE, WINDOW_SIZE
+        
         super().__init__()
         self.conv1 = nn.Conv1d(in_channels, 16, kernel_size=3, padding=1)
         self.bn1 = nn.BatchNorm1d(16)
