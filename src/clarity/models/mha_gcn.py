@@ -101,13 +101,34 @@ class MHA_GCN(nn.Module):
         # This implementation assumes batch processing is handled outside or by a wrapper.
         # It processes one graph at a time.
 
-        x = F.relu(self.gcn1(node_features, adj_matrix))
+        # First GCN layer with ReLU activation
+        x = self.gcn1(node_features, adj_matrix)
+        
+        # Safety check for numerical stability after first GCN
+        x = torch.nan_to_num(x, nan=0.0, posinf=1.0, neginf=-1.0)
+        x = F.relu(x)  # Apply ReLU after numerical cleaning
+        
+        # Second GCN layer
         x = self.gcn2(x, adj_matrix)
-
+        
+        # Safety check for numerical stability after second GCN
+        x = torch.nan_to_num(x, nan=0.0, posinf=1.0, neginf=-1.0)
+        
+        # Prepare for multi-head attention (add batch dimension)
         x_mha_input = x.unsqueeze(0)
+        
+        # Apply multi-head attention
         attn_output, _ = self.mha(x_mha_input, x_mha_input, x_mha_input)
-
+        
+        # Handle any numerical instability in attention output
+        attn_output = torch.nan_to_num(attn_output, nan=0.0, posinf=1.0, neginf=-1.0)
+        
+        # Global pooling to get graph-level embedding
         graph_embedding = torch.mean(attn_output, dim=1)
-
+        
+        # Final classification layer
         out = self.fc_out(graph_embedding.squeeze(0))
+        
+        # Final safety check
+        out = torch.nan_to_num(out, nan=0.0, posinf=1.0, neginf=-1.0)
         return out
