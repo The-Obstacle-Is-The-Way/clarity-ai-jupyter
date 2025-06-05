@@ -67,7 +67,8 @@ def extract_stft_spectrogram_eeg(epoch_data_all_channels, target_size=(224, 224)
         all_channel_spectrograms.append(spectrogram)
 
     # Cast to float64 to resolve type checking error
-    avg_spectrogram = np.mean(np.array(all_channel_spectrograms, dtype=np.float64), axis=0)
+    all_spectrograms = np.array(all_channel_spectrograms, dtype=np.float64)
+    avg_spectrogram = np.mean(all_spectrograms, axis=0)
     log_spectrogram = np.log(avg_spectrogram + 1e-10)
 
     resized_spectrogram = resize(
