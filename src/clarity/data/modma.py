@@ -4,13 +4,13 @@ import mne
 import numpy as np
 
 # Import only what's needed at module level to avoid circular imports
-from src.clarity.training.config import SEED
+from ...clarity.training.config import SEED
 
 
 def load_subject_data(subject_id):
     """Loads EEG data for a single subject from the MODMA dataset."""
     # Import here to avoid circular imports
-    from src.clarity.training.config import DATA_DIR
+    from ...clarity.training.config import DATA_DIR
 
     # Convert subject_id to int if it's a string
     subject_id = int(subject_id) if isinstance(subject_id, str) else subject_id
@@ -31,7 +31,7 @@ def load_subject_data(subject_id):
 def preprocess_raw_data(raw):
     """Applies channel selection, filtering, and ICA to the raw MNE object."""
     # Import here to avoid circular imports
-    from src.clarity.training.config import CHANNELS_29
+    from ...clarity.training.config import CHANNELS_29
 
     channel_mapping = {"Fpz": "FPz", "Iz": "I"}
     mapped_channels = []
@@ -108,7 +108,7 @@ def segment_data(raw) -> list:
         list: A list of numpy arrays representing epochs
     """
     # Import here to avoid circular imports
-    from src.clarity.training.config import OVERLAP, WINDOW_SIZE
+    from ...clarity.training.config import OVERLAP, WINDOW_SIZE
 
     # Create epochs using MNE's fixed length epoch function
     mne_epochs = mne.make_fixed_length_epochs(
