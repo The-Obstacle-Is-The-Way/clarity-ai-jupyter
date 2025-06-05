@@ -1,0 +1,21 @@
+jupyterlab
+mne
+numpy
+pandas
+scipy
+matplotlib
+seaborn
+scikit-learn
+torch
+torchvision
+torchaudio
+tqdm
+ipywidgets
+timm
+scikit-image
+nbformat
+pywavelets
+
+# Development and Code Quality
+ruff
+pyright 
