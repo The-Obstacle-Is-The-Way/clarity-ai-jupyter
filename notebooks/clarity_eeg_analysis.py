@@ -28,13 +28,13 @@ import mne
 
 # Local imports from our library
 # Ensure 'src' is in PYTHONPATH or the notebook is run from project root
-from clarity.training.config import (
+from src.clarity.training.config import (
     SEED, DEVICE, NUM_SUBJECTS, BATCH_SIZE, EPOCHS, LR, FREQ_BANDS
 )
-from clarity.data.modma import load_subject_data, preprocess_raw_data, segment_data
-from clarity.features import calculate_de_features
-from clarity.training.loop import CustomEEGDataset, train_model, evaluate_model
-from clarity.models import BaselineCNN, MHA_GCN
+from src.clarity.data.modma import load_subject_data, preprocess_raw_data, segment_data
+from src.clarity.features import calculate_de_features
+from src.clarity.training.loop import CustomEEGDataset, train_model, evaluate_model
+from src.clarity.models import BaselineCNN, MHA_GCN
 
 # %% [markdown]
 # ### Cell 2: Setup & Configuration
@@ -51,7 +51,7 @@ if torch.cuda.is_available():
 print(f"Using device: {DEVICE}")
 
 subject_ids_all = list(range(1, NUM_SUBJECTS + 1))
-labels_dict = {i: 1 if i <= 24 else 0 for i in subject_ids_all}
+labels_dict = {str(i): 1 if i <= 24 else 0 for i in subject_ids_all}
 
 # %% [markdown]
 # ### Cell 3: Main Experiment Loop (LOOCV)

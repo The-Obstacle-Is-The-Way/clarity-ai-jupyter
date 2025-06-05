@@ -70,8 +70,8 @@ class CustomEEGDataset(Dataset):
                     self.data.append((np.array(dwt_feature_stack), avg_adj))
                     self.labels.append(label)
             else:
-                for epoch_item in epochs:  # type: mne.Epochs
-                    epoch_data = epoch_item.get_data(copy=False)[0]
+                for epoch_item in epochs:
+                    epoch_data = epoch_item
                     self.data.append(epoch_data)
                     self.labels.append(label)
 
@@ -132,7 +132,7 @@ def train_model(
     """
     model.to(DEVICE)
     model.train()
-    for epoch in range(epochs):
+    for _epoch in range(epochs):
         for data in train_loader:
             if model_type == "mha_gcn":
                 dwt, adj, labels = data
