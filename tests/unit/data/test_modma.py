@@ -12,7 +12,7 @@ def test_preprocess_raw_data(sample_eeg_data):
     raw_processed = preprocess_raw_data(sample_eeg_data)
     
     # Verify return type
-    assert isinstance(raw_processed, mne.io.Raw)
+    assert isinstance(raw_processed, mne.io.BaseRaw)
     
     # Verify data shape preserved (preprocessing shouldn't change number of channels/timepoints)
     assert raw_processed.get_data().shape == sample_eeg_data.get_data().shape
