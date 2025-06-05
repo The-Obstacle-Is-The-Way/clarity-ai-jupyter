@@ -74,16 +74,24 @@ def preprocess_raw_data(raw):
             else:
                 print("Warning: No EOG components automatically found using available channels.")
         except Exception as e:
-            print(f"Warning: Could not detect EOG artifacts: {str(e)}")
+            print("Warning: Could not detect EOG artifacts: {}".format(str(e)))
     else:
         # If no EOG channels are available, try to detect artifacts automatically
         try:
             # Use automatic detection without specifying EOG channels
-            eog_indices = ica.find_bads_ecg(raw, method='correlation', threshold='auto', verbose=False)[0]
+            eog_indices = ica.find_bads_ecg(
+                raw, method='correlation', threshold='auto', verbose=False
+            )[0]
             if not eog_indices:
                 # Try to use ICA components that look like eye movements based on topography
-                eog_indices = [idx for idx, component in enumerate(ica.get_components()[:8])
-                              if np.abs(component[:2].mean()) > np.abs(component[2:].mean())]
+                # Find components likely to be eye movements based on topography
+                components = ica.get_components()[:8]
+                eog_indices = []
+                for idx, component in enumerate(components):
+                    front_mean = np.abs(component[:2].mean())
+                    back_mean = np.abs(component[2:].mean())
+                    if front_mean > back_mean:
+                        eog_indices.append(idx)
 
             if eog_indices:
                 ica.exclude = eog_indices
@@ -91,11 +99,14 @@ def preprocess_raw_data(raw):
             else:
                 print("Warning: Could not automatically detect EOG components.")
         except Exception as e:
-            print(f"Warning: Automatic artifact detection failed: {str(e)}")
+            print("Warning: Automatic artifact detection failed: {}".format(str(e)))
             print("Continuing without EOG artifact removal.")
 
     # Log what happened for diagnostic purposes
-    print(f"ICA excluded components: {ica.exclude if hasattr(ica, 'exclude') and ica.exclude else 'None'}")
+    # Check if ICA has excluded components
+    has_excluded = hasattr(ica, 'exclude') and ica.exclude
+    excluded_str = str(ica.exclude) if has_excluded else 'None'
+    print("ICA excluded components: {}".format(excluded_str))
 
 
     return raw
@@ -121,6 +132,11 @@ def segment_data(raw) -> list:
 
     # Convert MNE Epochs to a list of numpy arrays as expected by the test
     # Tests expect each epoch to have shape (1, n_channels, n_times) - adding the trial dimension
-    epochs_list = [epoch[np.newaxis, :, :] for epoch in mne_epochs.get_data()]
+    # Add a trial dimension (batch size of 1) to each epoch
+    data = mne_epochs.get_data()
+    epochs_list = []
+    for epoch in data:
+        # Reshape to (1, n_channels, n_times)
+        epochs_list.append(epoch[np.newaxis, :, :])
 
     return epochs_list
