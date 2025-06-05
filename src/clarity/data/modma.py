@@ -1,8 +1,8 @@
 import os
-
 import mne
 
-from src.clarity.training.config import CHANNELS_29, DATA_DIR, OVERLAP, SEED, WINDOW_SIZE
+# Import only what's needed at module level to avoid circular imports
+from src.clarity.training.config import SEED
 
 
 def load_subject_data(subject_id):
