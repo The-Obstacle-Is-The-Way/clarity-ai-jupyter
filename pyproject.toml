@@ -4,7 +4,6 @@ line-length = 88
 # Assume Python 3.10+
 target-version = "py310"
 
-[tool.ruff.lint]
 # A good starting set of rules:
 # E, F: standard pyflakes errors/warnings
 # W: pycodestyle warnings
@@ -12,8 +11,6 @@ target-version = "py310"
 # C90: mccabe complexity checks
 select = ["E", "F", "W", "I", "C90"]
 ignore = []
-
-[tool.ruff.format]
 
 
 [tool.pyright]
