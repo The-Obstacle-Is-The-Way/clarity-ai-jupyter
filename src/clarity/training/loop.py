@@ -88,7 +88,7 @@ class CustomEEGDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Union[
         Tuple[torch.Tensor, torch.Tensor],
-        Tuple[Tuple[torch.Tensor, torch.Tensor], torch.Tensor]
+        Tuple[torch.Tensor, torch.Tensor, torch.Tensor]
     ]:
         """Retrieves a sample from the dataset at the given index.
 
@@ -109,9 +109,10 @@ class CustomEEGDataset(Dataset):
         elif self.model_type == "mha_gcn":
             dwt_features, adj_matrix = data_point
             dwt_flat = dwt_features.reshape(dwt_features.shape[0], -1)
-            # Return as a tuple of (inputs, label) where inputs is also a tuple
+            # Return a flat tuple of three elements as expected by tests
             return (
-                (torch.FloatTensor(dwt_flat), torch.FloatTensor(adj_matrix)),
+                torch.FloatTensor(dwt_flat),
+                torch.FloatTensor(adj_matrix),
                 torch.tensor(label, dtype=torch.long)
             )
 
@@ -146,6 +147,7 @@ def train_model(
         for data in train_loader:
             if model_type == "mha_gcn":
                 dwt, adj, labels = data
+                # Keep inputs as a tuple of (dwt, adj) as required by the model
                 inputs = (dwt.to(DEVICE), adj.to(DEVICE))
                 labels = labels.to(DEVICE)
             else:

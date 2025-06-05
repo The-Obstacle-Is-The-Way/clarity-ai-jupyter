@@ -55,7 +55,6 @@ def _apply_filters(raw):
     """
     # Apply basic filters
     raw = raw.copy().filter(l_freq=1, h_freq=None)
-    raw.events_from_annotations(event_id="auto", chunk_duration=2.0)
     raw.notch_filter(freqs=50, n_jobs=1, verbose=False)  # Remove line noise
     return raw
 
@@ -125,7 +124,14 @@ def preprocess_raw_data(raw):
     # Step 2: Apply filters
     raw = _apply_filters(raw)
     # Step 3: Apply ICA for artifact removal (primarily EOG)
-    ica = mne.preprocessing.ICA(n_components=20, random_state=97)  # SEED, verbose=False
+    # Dynamically set n_components to be min(20, num_channels)
+    n_components = min(20, len(raw.ch_names))
+    # Initialize ICA with fixed random seed for reproducibility
+    ica = mne.preprocessing.ICA(
+        n_components=n_components,
+        random_state=97,
+        verbose=False
+    )
     ica.fit(raw, verbose=False)
     # Step 4: Detect and remove artifacts
     # First check if we have EOG channels in the data
@@ -160,8 +166,8 @@ def segment_data(raw) -> list:
     # Import here to avoid circular imports
     from ...clarity.training.config import OVERLAP, WINDOW_SIZE
 
-    # Now segment into epochs
-    epochs = raw.events_from_annotations(event_id="auto", chunk_duration=2.0)
+    # Create fixed length epochs directly without using events_from_annotations
+    # This works with RawArray objects
     epochs = mne.make_fixed_length_epochs(
         raw,
         duration=WINDOW_SIZE,
@@ -172,8 +178,6 @@ def segment_data(raw) -> list:
 
     # Convert MNE Epochs to a list of numpy arrays as expected by the test
     # Tests expect each epoch to have shape (1, n_channels, n_times)
-    # Adding the trial dimension
-    # Add a trial dimension (batch size of 1) to each epoch
     data = epochs.get_data()
     epochs_list = []
     for epoch in data:
