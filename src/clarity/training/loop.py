@@ -30,7 +30,7 @@ class CustomEEGDataset(Dataset):
         """
         # Import here to avoid circular imports
         from ..data.modma import load_subject_data, preprocess_raw_data, segment_data
-        
+
         self.subject_ids = subject_ids
         self.labels_dict = labels_dict
         self.model_type = model_type

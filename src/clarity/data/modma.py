@@ -1,4 +1,5 @@
 import os
+
 import mne
 import numpy as np
 
@@ -10,10 +11,10 @@ def load_subject_data(subject_id):
     """Loads EEG data for a single subject from the MODMA dataset."""
     # Import here to avoid circular imports
     from src.clarity.training.config import DATA_DIR
-    
+
     # Convert subject_id to int if it's a string
     subject_id = int(subject_id) if isinstance(subject_id, str) else subject_id
-    
+
     file_path = os.path.join(
         DATA_DIR, f"EEG_128channel_resting/sub{subject_id:02d}/rest.set"
     )
@@ -31,7 +32,7 @@ def preprocess_raw_data(raw):
     """Applies channel selection, filtering, and ICA to the raw MNE object."""
     # Import here to avoid circular imports
     from src.clarity.training.config import CHANNELS_29
-    
+
     channel_mapping = {"Fpz": "FPz", "Iz": "I"}
     mapped_channels = []
     for ch in CHANNELS_29:
@@ -57,10 +58,10 @@ def preprocess_raw_data(raw):
 
     # Define EOG channels to check for
     EOG_CHANNELS = ["Fp1", "Fp2", "Fpz"]
-    
+
     # Check which EOG channels are available
     available_eog_channels = [ch for ch in EOG_CHANNELS if ch in raw.ch_names]
-    
+
     if available_eog_channels:
         try:
             # Use only available EOG channels
@@ -81,9 +82,9 @@ def preprocess_raw_data(raw):
             eog_indices = ica.find_bads_ecg(raw, method='correlation', threshold='auto', verbose=False)[0]
             if not eog_indices:
                 # Try to use ICA components that look like eye movements based on topography
-                eog_indices = [idx for idx, component in enumerate(ica.get_components()[:8]) 
+                eog_indices = [idx for idx, component in enumerate(ica.get_components()[:8])
                               if np.abs(component[:2].mean()) > np.abs(component[2:].mean())]
-            
+
             if eog_indices:
                 ica.exclude = eog_indices
                 ica.apply(raw)
@@ -92,7 +93,7 @@ def preprocess_raw_data(raw):
         except Exception as e:
             print(f"Warning: Automatic artifact detection failed: {str(e)}")
             print("Continuing without EOG artifact removal.")
-    
+
     # Log what happened for diagnostic purposes
     print(f"ICA excluded components: {ica.exclude if hasattr(ica, 'exclude') and ica.exclude else 'None'}")
 
@@ -102,13 +103,13 @@ def preprocess_raw_data(raw):
 
 def segment_data(raw) -> list:
     """Segments preprocessed data into 2s windows with 50% overlap.
-    
+
     Returns:
         list: A list of numpy arrays representing epochs
     """
     # Import here to avoid circular imports
-    from src.clarity.training.config import WINDOW_SIZE, OVERLAP
-    
+    from src.clarity.training.config import OVERLAP, WINDOW_SIZE
+
     # Create epochs using MNE's fixed length epoch function
     mne_epochs = mne.make_fixed_length_epochs(
         raw,
@@ -117,9 +118,9 @@ def segment_data(raw) -> list:
         preload=True,
         verbose=False,
     )
-    
+
     # Convert MNE Epochs to a list of numpy arrays as expected by the test
     # Tests expect each epoch to have shape (1, n_channels, n_times) - adding the trial dimension
     epochs_list = [epoch[np.newaxis, :, :] for epoch in mne_epochs.get_data()]
-    
+
     return epochs_list

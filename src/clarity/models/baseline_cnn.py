@@ -37,16 +37,16 @@ class BaselineCNN(nn.Module):
         """
         x = self.pool1(F.relu(self.bn1(self.conv1(x))))
         x = self.pool2(F.relu(self.bn2(self.conv2(x))))
-        
+
         # Calculate flattened size dynamically based on actual shape after convolutions
         batch_size = x.size(0)
         flattened_size = x.size(1) * x.size(2)  # channels * time points after pooling
-        
+
         # If fc1 is None or has wrong input size, create a new one
         if self.fc1 is None or self.fc1.in_features != flattened_size:
             # Create new fc1 layer with correct size
             self.fc1 = nn.Linear(flattened_size, 128).to(x.device)
-        
+
         x = x.view(batch_size, flattened_size)
         x = F.relu(self.fc1(x))
         x = self.dropout(x)

@@ -23,9 +23,6 @@ import torch.nn as nn
 import torch.optim as optim
 from ipywidgets import interact
 from sklearn.model_selection import LeaveOneOut
-from torch.utils.data import DataLoader
-from tqdm.notebook import tqdm
-
 from src.clarity.data.modma import load_subject_data, preprocess_raw_data, segment_data
 from src.clarity.features import calculate_de_features
 from src.clarity.models import MHA_GCN, BaselineCNN
@@ -42,6 +39,8 @@ from src.clarity.training.config import (
     SEED,
 )
 from src.clarity.training.loop import CustomEEGDataset, evaluate_model, train_model
+from torch.utils.data import DataLoader
+from tqdm.notebook import tqdm
 
 # %% [markdown]
 # ### Cell 2: Setup & Configuration

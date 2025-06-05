@@ -10,7 +10,7 @@ def calculate_de_features(epoch_data):
     """Calculate differential entropy features for each frequency band."""
     # Import constants locally to avoid circular imports
     from src.clarity.training.config import FREQ_BANDS, SAMPLING_RATE
-    
+
     n_channels, n_times = epoch_data.shape
     de_features = np.zeros((n_channels, len(FREQ_BANDS)))
 
@@ -47,7 +47,7 @@ def extract_stft_spectrogram_eeg(epoch_data_all_channels, target_size=(224, 224)
     """Creates a 3-channel 224x224 spectrogram image from a 2s EEG window."""
     # Import constants locally to avoid circular imports
     from src.clarity.training.config import SAMPLING_RATE
-    
+
     n_channels, _n_times = epoch_data_all_channels.shape
     nperseg = 32
     noverlap = nperseg // 2
@@ -85,24 +85,24 @@ def extract_stft_spectrogram_eeg(epoch_data_all_channels, target_size=(224, 224)
 
 def compute_adjacency_matrix(epoch_data_all_channels, threshold=0.3):
     """Computes the Pearson correlation-based adjacency matrix with no self-loops.
-    
+
     Args:
         epoch_data_all_channels: EEG data of shape (num_channels, num_timepoints)
         threshold: Correlation threshold below which connections are set to 0
-        
+
     Returns:
         adj_matrix: Adjacency matrix with zeros on the diagonal (no self-loops)
     """
     # Compute Pearson correlation between channels
     adj_matrix = np.corrcoef(epoch_data_all_channels)
-    
+
     # Handle NaN values
     adj_matrix[np.isnan(adj_matrix)] = 0
-    
+
     # Threshold weak connections
     adj_matrix[np.abs(adj_matrix) < threshold] = 0
-    
+
     # Set diagonal to zero (no self-loops)
     np.fill_diagonal(adj_matrix, 0)
-    
+
     return adj_matrix

@@ -5,10 +5,11 @@ This file contains fixtures that can be used across all test modules.
 
 import os
 import sys
-import pytest
-import numpy as np
-import torch
+
 import mne
+import numpy as np
+import pytest
+import torch
 
 # Add the src directory to the Python path to ensure imports work correctly
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -37,13 +38,13 @@ def sample_eeg_data():
     # Create a simple 10-channel, 1000-sample synthetic EEG signal
     sfreq = 250  # Hz
     data = np.random.randn(10, 1000)  # 10 channels, 1000 time points
-    
+
     # MNE standardized channel names for 10 channels
     ch_names = ['Fz', 'Cz', 'Pz', 'C3', 'C4', 'F3', 'F4', 'P3', 'P4', 'Oz']
-    
+
     # Create info structure
     info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types='eeg')
-    
+
     # Create Raw object
     raw = mne.io.RawArray(data, info)
     return raw
@@ -59,7 +60,7 @@ def sample_epochs(sample_eeg_data):
         [500, 0, 1],  # Event at time 500, class 1
         [700, 0, 2],  # Event at time 700, class 2
     ])
-    
+
     # Create epochs
     epochs = mne.Epochs(
         sample_eeg_data,
