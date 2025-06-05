@@ -95,16 +95,25 @@ def preprocess_raw_data(raw):
     return raw
 
 
-def segment_data(raw) -> mne.Epochs:
-    """Segments preprocessed data into 2s windows with 50% overlap."""
+def segment_data(raw) -> list:
+    """Segments preprocessed data into 2s windows with 50% overlap.
+    
+    Returns:
+        list: A list of numpy arrays representing epochs
+    """
     # Import here to avoid circular imports
     from src.clarity.training.config import WINDOW_SIZE, OVERLAP
     
-    epochs = mne.make_fixed_length_epochs(
+    # Create epochs using MNE's fixed length epoch function
+    mne_epochs = mne.make_fixed_length_epochs(
         raw,
         duration=WINDOW_SIZE,
         overlap=WINDOW_SIZE * OVERLAP,
         preload=True,
         verbose=False,
     )
-    return epochs
+    
+    # Convert MNE Epochs to a list of numpy arrays as expected by the test
+    epochs_list = [epoch for epoch in mne_epochs.get_data()]
+    
+    return epochs_list
