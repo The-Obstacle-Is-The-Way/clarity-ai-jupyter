@@ -38,6 +38,9 @@ reportMissingImports = true
 reportMissingTypeStubs = false
 exclude = ["**/__pycache__", "**/.ipynb_checkpoints", "**/.pytest_cache"]
 
+# Explicitly list modules to ignore missing type stubs for
+pyrightIgnoreModules = ["mne", "pywt", "scipy", "scipy.signal", "sklearn", "sklearn.metrics", "tqdm", "setuptools"]
+
 # Helps pyright find your local packages, treating 'src' as a root for 'clarity'
 executionEnvironments = [
   { root = "src" }
