@@ -50,8 +50,8 @@ if torch.cuda.is_available():
 
 print(f"Using device: {DEVICE}")
 
-subject_ids_all = list(range(1, NUM_SUBJECTS + 1))
-labels_dict = {str(i): 1 if i <= 24 else 0 for i in subject_ids_all}
+subject_ids_all = [str(i) for i in range(1, NUM_SUBJECTS + 1)]
+labels_dict = {i: 1 if int(i) <= 24 else 0 for i in subject_ids_all}
 
 # %% [markdown]
 # ### Cell 3: Main Experiment Loop (LOOCV)
@@ -148,7 +148,7 @@ def plot_topomap_for_band(band_name: str):
         print("Sample data not loaded. Cannot plot.")
         return
         
-    all_de = [calculate_de_features(epoch.get_data(copy=False)[0]) for epoch in epochs_sample]
+    all_de = [calculate_de_features(epoch) for epoch in epochs_sample]
     avg_de_all_bands = np.mean(all_de, axis=0)
     
     band_idx = list(FREQ_BANDS.keys()).index(band_name)
