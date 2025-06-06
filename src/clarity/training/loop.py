@@ -1,5 +1,4 @@
 from typing import Dict, List, Tuple, Union
-from torch_geometric.data import Data
 
 import numpy as np
 import torch
@@ -7,6 +6,7 @@ import torch.nn as nn
 import torch.optim
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from torch.utils.data import DataLoader, Dataset
+from torch_geometric.data import Data
 from tqdm.notebook import tqdm
 
 from ..data.caching import load_from_cache, save_to_cache
@@ -118,7 +118,7 @@ class CustomEEGDataset(Dataset):
                     compute_adjacency_matrix(processed_epochs[j].get_data(copy=False)[0])
                 )
             avg_adj = np.mean(adj_matrices, axis=0)
-            
+
             # Convert adjacency matrix to edge index for PyG
             adj_tensor = torch.tensor(avg_adj, dtype=torch.float32)
             edge_index = adj_tensor.nonzero().t().contiguous()
@@ -128,8 +128,8 @@ class CustomEEGDataset(Dataset):
             node_features_flat = node_features.reshape(node_features.shape[0], -1)
 
             graph_data = Data(
-                x=node_features_flat, 
-                edge_index=edge_index, 
+                x=node_features_flat,
+                edge_index=edge_index,
                 y=torch.tensor(label, dtype=torch.long)
             )
             self.data.append(graph_data)
@@ -144,7 +144,7 @@ class CustomEEGDataset(Dataset):
         """Retrieves a sample from the dataset at the given index."""
         if self.model_type == "mha_gcn":
             return self.data[idx]
-        
+
         data_point = self.data[idx]
         label = self.labels[idx]
         return torch.FloatTensor(data_point), torch.tensor(label, dtype=torch.long)
@@ -164,7 +164,7 @@ def train_model(
     for _epoch in range(epochs):
         for data in train_loader:
             optimizer.zero_grad()
-            
+
             if model_type == "mha_gcn":
                 data = data.to(DEVICE)
                 outputs, _ = model(data.x, data.edge_index, data.batch)
@@ -178,7 +178,7 @@ def train_model(
                 labels = labels.to(DEVICE)
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
-            
+
             loss.backward()
             optimizer.step()
     return model
@@ -209,7 +209,7 @@ def evaluate_model(
                     inputs = tuple(t.to(DEVICE) for t in inputs)
                 else:
                     inputs = inputs.to(DEVICE)
-                
+
                 cpu_labels = labels.cpu().numpy()
                 outputs = model(inputs)
                 preds = torch.argmax(outputs, dim=1)

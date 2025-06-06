@@ -58,7 +58,7 @@ class MHA_GCN(nn.Module):
         x = self.gcn1(x, edge_index)
         x = F.relu(x)
         x = self.gcn2(x, edge_index)
-        
+
         # NOTE: MHA layer expects (N, L, E) or (L, N, E) where L is seq_len.
         # Here, we treat nodes as the sequence. This might not be the optimal
         # use of MHA in a graph context, but we are preserving the original
@@ -67,7 +67,7 @@ class MHA_GCN(nn.Module):
         # A simple workaround is to process items in the batch, but this negates the batching benefit.
         # For now, we'll proceed with a mean-pooling of attention weights as a placeholder.
         # A more advanced implementation would use a graph-native attention mechanism.
-        
+
         # We apply MHA to the node embeddings `x`.
         # To make it compatible, we can treat the whole batch of nodes as one sequence.
         x_mha_input = x.unsqueeze(0) # (1, num_nodes_in_batch, features)

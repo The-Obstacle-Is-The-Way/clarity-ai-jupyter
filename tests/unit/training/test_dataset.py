@@ -1,10 +1,10 @@
 """Unit tests for the CustomEEGDataset class."""
 
+
 import numpy as np
 import torch
 from src.clarity.training.loop import CustomEEGDataset
 from torch_geometric.data import Data
-from typing import Union, Tuple
 
 
 def test_custom_eeg_dataset_initialization(sample_epochs, subject_labels):

@@ -1,10 +1,10 @@
 """Unit tests for the neural network model architectures."""
 
 import torch
-from torch_geometric.data import Data
-from torch_geometric.loader import DataLoader as PyGDataLoader
 from src.clarity.models import MHA_GCN, BaselineCNN
 from src.clarity.training.config import CHANNELS_29, NUM_CLASSES
+from torch_geometric.data import Data
+from torch_geometric.loader import DataLoader as PyGDataLoader
 
 
 def test_baseline_cnn_forward():
