@@ -65,6 +65,19 @@ Navigate to `notebooks/clarity_eeg_analysis.py` to open and run the analysis. VS
 
 ---
 
+## Expected Results
+
+The performance of the models is evaluated using Leave-One-Out Cross-Validation (LOOCV) across all subjects. The primary metrics are accuracy and F1-score for the multi-class severity classification task.
+
+-   The `BaselineCNN` provides a solid starting point, demonstrating the viability of using raw EEG signals for this task.
+-   `EEGNet` offers a more sophisticated, compact architecture designed specifically for EEG, and is expected to outperform the baseline.
+-   The `MHA_GCN` model, which leverages graph-based representations of brain connectivity, is hypothesized to capture more complex relational patterns and yield higher performance.
+-   The `SpectrogramViT` explores an alternative modality by treating EEG signals as images, providing a powerful vision-based approach.
+
+After running the notebook (`DEBUG_MODE = False`), a full report including confusion matrices and statistical comparisons will be generated. Expected accuracies are in the range of 60-80%, with the more advanced models pushing the upper end of this range, consistent with state-of-the-art findings in the references below.
+
+---
+
 ## Core Scientific References
 
 The methodologies implemented in this repository are grounded in the following key research papers. Users are encouraged to consult them for a deeper understanding of the scientific context.
