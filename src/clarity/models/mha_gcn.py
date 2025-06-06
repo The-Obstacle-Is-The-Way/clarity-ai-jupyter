@@ -72,8 +72,8 @@ class MHA_GCN(nn.Module):
         # To make it compatible, we can treat the whole batch of nodes as one sequence.
         x_mha_input = x.unsqueeze(0)  # (1, num_nodes_in_batch, features)
         attn_output, attn_weights = self.mha(
-            x_mha_input, 
-            x_mha_input, 
+            x_mha_input,
+            x_mha_input,
             x_mha_input
         )
         attn_output = attn_output.squeeze(0)
