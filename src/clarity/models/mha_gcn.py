@@ -64,9 +64,10 @@ class MHA_GCN(nn.Module):
         # use of MHA in a graph context, but we are preserving the original
         # architecture's intent. The input needs to be reshaped.
         # However, MultiheadAttention is not directly compatible with PyG's batching.
-        # A simple workaround is to process items in the batch, but this negates the batching benefit.
-        # For now, we'll proceed with a mean-pooling of attention weights as a placeholder.
-        # A more advanced implementation would use a graph-native attention mechanism.
+        # A simple workaround is to process items in the batch, but this negates
+        # the batching benefit. For now, we'll proceed with a mean-pooling of
+        # attention weights as a placeholder. A more advanced implementation
+        # would use a graph-native attention mechanism.
 
         # We apply MHA to the node embeddings `x`.
         # To make it compatible, we can treat the whole batch of nodes as one sequence.
@@ -78,7 +79,7 @@ class MHA_GCN(nn.Module):
         )
         attn_output = attn_output.squeeze(0)
 
-        # Global average pooling to get a graph-level embedding for each graph in the batch
+        # Global average pooling to get a graph-level embedding
         graph_embedding = global_mean_pool(attn_output, batch)
 
         # Final classification layer
