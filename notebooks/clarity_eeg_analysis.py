@@ -8,10 +8,19 @@
 # ---
 
 # %% [markdown]
-# # Psychiatry Digital Twin - EEG Analysis Demo
+# # Psychiatry Digital Twin - EEG Analysis Pipeline
 #
-# This notebook demonstrates the end-to-end analysis pipeline for the MODMA dataset.
-# It imports all core logic from the `clarity` library in the `src` directory.
+# This notebook implements an end-to-end analysis pipeline for the [MODMA dataset](http://modma.lzu.edu.cn/data_sources/sharing/), focusing on classifying multiple levels of depression severity from resting-state EEG signals.
+#
+# **Objective:** To compare the performance of several deep learning architectures using a robust Leave-One-Out Cross-Validation (LOOCV) strategy.
+#
+# **Models Implemented:**
+# - `BaselineCNN`: A simple 1D CNN for raw EEG time-series.
+# - `EEGNet`: A compact, well-established CNN architecture designed for EEG data.
+# - `MHA_GCN`: A Graph Convolutional Network with Multi-Head Attention that models brain connectivity.
+# - `SpectrogramViT`: A Vision Transformer that classifies 2D spectrogram representations of EEG signals.
+#
+# All core logic is imported from the `clarity` library in the `src` directory.
 
 # %%
 # CELL 1: Imports
@@ -26,7 +35,7 @@ from sklearn.model_selection import LeaveOneOut
 from src.clarity.data.modma import load_subject_data, preprocess_raw_data, segment_data
 from src.clarity.features import calculate_de_features
 from src.clarity.models import MHA_GCN, BaselineCNN, EEGNet, SpectrogramViT
-from typing import Dict, List, Union
+from typing import Dict, List, Union, TypedDict
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
 from scipy.stats import ttest_rel
@@ -92,11 +101,21 @@ if DEBUG_MODE:
 
 # %% [markdown]
 # ### Cell 3: Main Experiment Loop (LOOCV)
-# This cell executes the full LOOCV experiment.
+#
+# This cell executes the full experiment. We use **Leave-One-Out Cross-Validation (LOOCV)**, a rigorous evaluation method where the model is trained on all subjects except one, which is held out for testing. This process is repeated for every subject, ensuring that each one is used as a test case exactly once.
+#
+# LOOCV is computationally expensive but provides an unbiased and reliable estimate of model performance, which is especially important for smaller datasets like MODMA.
+#
+# The `MODELS_TO_RUN` list below can be configured to train and compare multiple models.
 
 # %%
+class ModelResult(TypedDict):
+    results: Dict[str, List[float]]
+    preds: List[int]
+    labels: List[int]
+
 MODELS_TO_RUN = ['cnn', 'eegnet'] # Models to train and compare
-all_model_results = {}
+all_model_results: Dict[str, ModelResult] = {}
 
 for model_name in MODELS_TO_RUN:
     loo = LeaveOneOut()
@@ -158,11 +177,12 @@ for model_name in MODELS_TO_RUN:
         results['recall'].append(rec)
         results['f1'].append(f1)
     
-    all_model_results[model_name] = {
+    result_data: ModelResult = {
         'results': results,
         'preds': all_fold_preds,
         'labels': all_fold_labels
     }
+    all_model_results[model_name] = result_data
 
 # %% [markdown]
 # ### Cell 4: Results & Comparison
@@ -225,6 +245,10 @@ if len(MODELS_TO_RUN) == 2:
 
 # %% [markdown]
 # ### Cell 5: Interactive Visualization
+#
+# This cell provides an interactive tool to visualize the **Differential Entropy (DE)** of the preprocessed EEG signals as a topomap.
+#
+# **Differential Entropy** is a feature used in EEG analysis that measures the complexity of a signal in different frequency bands (Delta, Theta, Alpha, Beta). It is a powerful indicator of brain activity and is often used in studies of depression. Visualizing DE across the scalp can help identify spatial patterns of brain activity associated with different mental states.
 
 # %%
 try:
