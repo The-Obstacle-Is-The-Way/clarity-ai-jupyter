@@ -6,7 +6,7 @@ pytest-xdist==3.3.1
 
 # Code quality tools
 ruff==0.5.5
-pyright==1.1.320
+pyright==1.1.401
 
 # Documentation
 sphinx==6.2.1  # Using a version compatible with sphinx-rtd-theme
