@@ -1,7 +1,34 @@
 """Unit tests for the feature extraction functionality."""
 
 import numpy as np
-from src.clarity.features import compute_adjacency_matrix, extract_dwt_features
+from src.clarity.features import (
+    calculate_de_features,
+    compute_adjacency_matrix,
+    extract_dwt_features,
+    extract_stft_spectrogram_eeg,
+)
+from src.clarity.training.config import FREQ_BANDS
+
+
+def test_calculate_de_features():
+    """Test the differential entropy feature calculation."""
+    # 2 channels, 2 seconds of data at 250Hz
+    epoch_data = np.random.randn(2, 500)
+    de_features = calculate_de_features(epoch_data)
+    assert de_features.shape == (2, len(FREQ_BANDS))
+    assert not np.isnan(de_features).any()
+
+
+def test_extract_stft_spectrogram_eeg():
+    """Test the STFT spectrogram extraction."""
+    epoch_data = np.random.randn(29, 500)  # 29 channels, 2s at 250Hz
+    target_size = (128, 128)
+    spectrogram = extract_stft_spectrogram_eeg(epoch_data, target_size=target_size)
+
+    assert spectrogram.shape == (3, *target_size)
+    assert spectrogram.min() >= 0.0
+    assert spectrogram.max() <= 1.0
+    assert not np.isnan(spectrogram).any()
 
 
 def test_extract_dwt_features():
