@@ -93,3 +93,34 @@ def test_custom_eeg_dataset_getitem_mha_gcn(subject_labels):
     assert retrieved_item.edge_index is not None and torch.equal(retrieved_item.edge_index, edge_index)
     assert isinstance(retrieved_item.y, torch.Tensor)
     assert retrieved_item.y.item() == 1
+
+
+def test_custom_eeg_dataset_getitem_vit(subject_labels):
+    """Test the dataset's __getitem__ for the ViT model type."""
+    subject_ids = list(subject_labels.keys())[:2]
+    dataset = CustomEEGDataset(subject_ids, subject_labels, model_type="vit")
+
+    # Manually create a sample spectrogram
+    spectrogram = np.random.rand(3, 224, 224)
+    label_val = 0
+    dataset.data = [spectrogram]
+    dataset.labels = [label_val]
+
+    item = dataset[0]
+    assert isinstance(item, tuple)
+    data, label = item
+
+    assert isinstance(data, torch.Tensor)
+    assert data.shape == (3, 224, 224)
+    assert isinstance(label, torch.Tensor)
+    assert label.item() == label_val
+
+
+def test_custom_eeg_dataset_missing_subject(subject_labels):
+    """Test that the dataset handles missing subject data gracefully."""
+    # Use a subject ID that is guaranteed to not exist
+    subject_ids = ["missing_subject_id"]
+    dataset = CustomEEGDataset(subject_ids, subject_labels, model_type="cnn")
+
+    # The dataset should be empty because the subject data cannot be loaded
+    assert len(dataset) == 0
