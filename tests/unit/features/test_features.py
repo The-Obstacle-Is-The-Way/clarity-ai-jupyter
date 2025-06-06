@@ -31,6 +31,15 @@ def test_extract_stft_spectrogram_eeg():
     assert not np.isnan(spectrogram).any()
 
 
+def test_extract_stft_spectrogram_eeg_zero_variance():
+    """Test STFT with a zero-variance (flat) signal."""
+    epoch_data = np.zeros((29, 500))
+    target_size = (128, 128)
+    spectrogram = extract_stft_spectrogram_eeg(epoch_data, target_size=target_size)
+    assert spectrogram.shape == (3, *target_size)
+    assert np.all(spectrogram == 0)
+
+
 def test_extract_dwt_features():
     """Test that extract_dwt_features correctly extracts wavelet features from a signal."""
     # Create a sample signal - a sine wave of 10Hz with 250Hz sampling rate
