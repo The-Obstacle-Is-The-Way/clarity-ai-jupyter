@@ -59,6 +59,7 @@ from src.clarity.training.config import (
 from src.clarity.training.loop import CustomEEGDataset, evaluate_model, train_model
 from torch.utils.data import DataLoader
 from tqdm.notebook import tqdm
+from torch_geometric.loader import DataLoader as PyGDataLoader
 
 # %% [markdown]
 # ### Cell 2: Setup & Configuration
@@ -149,8 +150,12 @@ for model_name in MODELS_TO_RUN:
             print(f"Skipping fold {fold+1} due to missing data.")
             continue
 
-        train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-        test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
+        if model_name == "mha_gcn":
+            train_loader = PyGDataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+            test_loader = PyGDataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
+        else:
+            train_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+            test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
         if model_name == "cnn":
             model = BaselineCNN(num_classes=NUM_CLASSES)
@@ -312,16 +317,18 @@ if 'model' in locals() and isinstance(model, MHA_GCN):
     # Re-create a test loader for one subject to get a sample
     # Note: This uses the last `test_subject_ids` from the LOOCV loop.
     if 'test_subject_ids' in locals() and test_subject_ids:
+        # Use PyGDataLoader for GCN data
         vis_dataset = CustomEEGDataset(test_subject_ids, labels_dict, model_type='mha_gcn')
-        vis_loader = DataLoader(vis_dataset, batch_size=1, shuffle=False)
-
-        sample_data = next(iter(vis_loader))
-        dwt, adj, label = sample_data
-
+        vis_loader = PyGDataLoader(vis_dataset, batch_size=1, shuffle=False)
+        
+        sample_batch = next(iter(vis_loader))
+        sample_batch = sample_batch.to(DEVICE)
+        
         model.to(DEVICE)
         model.eval()
         with torch.no_grad():
-            output, attention_weights = model(dwt[0].to(DEVICE), adj[0].to(DEVICE))
+            # The model now expects the batched data format
+            output, attention_weights = model(sample_batch.x, sample_batch.edge_index, sample_batch.batch)
 
         if attention_weights is not None:
             # Squeeze to get a 2D matrix (num_nodes x num_nodes)

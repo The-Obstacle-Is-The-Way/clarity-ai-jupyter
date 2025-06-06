@@ -15,6 +15,7 @@ timm
 scikit-image
 nbformat
 pywavelets
+torch-geometric
 
 # Development and Code Quality
 ruff

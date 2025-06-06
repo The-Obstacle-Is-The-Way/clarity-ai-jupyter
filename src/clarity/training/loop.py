@@ -1,4 +1,5 @@
 from typing import Dict, List, Tuple, Union
+from torch_geometric.data import Data, Dataset as PyGDataset
 
 import numpy as np
 import torch
@@ -19,7 +20,7 @@ from ..features import (
 from .config import CHANNELS_29, DEVICE, EPOCHS  # Corrected relative import
 
 
-class CustomEEGDataset(Dataset):
+class CustomEEGDataset(PyGDataset):
     """Custom PyTorch Dataset for EEG data.
 
     Handles feature extraction and data loading for different model types.
@@ -39,6 +40,7 @@ class CustomEEGDataset(Dataset):
             model_type: Type of model for which data is being prepared
                 ('cnn' or 'mha_gcn').
         """
+        super(CustomEEGDataset, self).__init__()
         from ..data.modma import load_subject_data, preprocess_raw_data, segment_data
 
         self.subject_ids = subject_ids
@@ -117,45 +119,49 @@ class CustomEEGDataset(Dataset):
                     compute_adjacency_matrix(processed_epochs[j].get_data(copy=False)[0])
                 )
             avg_adj = np.mean(adj_matrices, axis=0)
-            self.data.append((np.array(dwt_feature_stack), avg_adj))
-            self.labels.append(label)
+            
+            # Convert adjacency matrix to edge index for PyG
+            adj_tensor = torch.tensor(avg_adj, dtype=torch.float32)
+            edge_index = adj_tensor.nonzero().t().contiguous()
 
-    def __len__(self) -> int:
+            node_features = torch.tensor(np.array(dwt_feature_stack), dtype=torch.float32)
+            # Flatten the node features
+            node_features_flat = node_features.reshape(node_features.shape[0], -1)
+
+            graph_data = Data(
+                x=node_features_flat, 
+                edge_index=edge_index, 
+                y=torch.tensor(label, dtype=torch.long)
+            )
+            self.data.append(graph_data)
+            # self.labels list is no longer needed for GCN as it's in the Data object
+            self.labels.append(label) # Keep for now to avoid breaking __len__
+
+    def len(self) -> int:
         """Returns the total number of samples in the dataset."""
         return len(self.data)
 
-    def __getitem__(self, idx: int) -> Union[
+    def get(self, idx: int) -> Union[
         Tuple[torch.Tensor, torch.Tensor],
-        Tuple[torch.Tensor, torch.Tensor, torch.Tensor]
+        Data
     ]:
-        """Retrieves a sample from the dataset at the given index.
+        """Retrieves a sample from the dataset at the given index."""
+        if self.model_type == "mha_gcn":
+            return self.data[idx]
 
-        Args:
-            idx: Index of the sample to retrieve.
-
-        Returns:
-            A tuple containing the data and label. The structure depends on model_type:
-            - For 'cnn': (features_tensor, label_tensor)
-            - For 'mha_gcn': (dwt_features_tensor, adj_matrix_tensor, label_tensor)
-        """
         data_point = self.data[idx]
         label = self.labels[idx]
 
         if self.model_type in ["cnn", "vit"]:
+            # This part is for standard torch DataLoaders, not PyG
+            # We return a tuple, which is not a PyG Data object.
+            # This is a bit of a hack to support both in one class.
             return torch.FloatTensor(data_point), torch.tensor(label, dtype=torch.long)
-
-        elif self.model_type == "mha_gcn":
-            dwt_features, adj_matrix = data_point
-            dwt_flat = dwt_features.reshape(dwt_features.shape[0], -1)
-            # Return a flat tuple of three elements as expected by tests
-            return (
-                torch.FloatTensor(dwt_flat),
-                torch.FloatTensor(adj_matrix),
-                torch.tensor(label, dtype=torch.long)
-            )
-
-        # Fallback, should ideally not be reached if model_type is always cnn or mha_gcn
-        return torch.FloatTensor(data_point), torch.tensor(label, dtype=torch.long)
+        
+        # This path should not be hit if model_type is one of the handled ones.
+        # However, to satisfy the abstract nature of PyG's get, we return something.
+        # A proper implementation might split this into two Dataset classes.
+        return self.data[idx]
 
 
 def train_model(
@@ -166,54 +172,28 @@ def train_model(
     model_type: str,
     epochs: int = EPOCHS,
 ) -> nn.Module:
-    """Trains a given PyTorch model.
-
-    Args:
-        model: The PyTorch model to train.
-        train_loader: DataLoader for the training data.
-        optimizer: The optimizer to use for training.
-        criterion: The loss function.
-        model_type: Type of the model ('cnn' or 'mha_gcn') for specific data handling.
-        epochs: Number of epochs to train for.
-
-    Returns:
-        The trained model.
-    """
+    """Trains a given PyTorch model."""
     model.to(DEVICE)
     model.train()
     for _epoch in range(epochs):
         for data in train_loader:
+            optimizer.zero_grad()
+            
             if model_type == "mha_gcn":
-                dwt, adj, labels = data
-                # Keep inputs as a tuple of (dwt, adj) as required by the model
-                inputs = (dwt.to(DEVICE), adj.to(DEVICE))
-                labels = labels.to(DEVICE)
+                data = data.to(DEVICE)
+                outputs, _ = model(data.x, data.edge_index, data.batch)
+                loss = criterion(outputs, data.y)
             else: # Covers 'cnn', 'vit', and any other standard model
                 inputs, labels = data
-                # Handle inputs which could be a tensor or a tuple of tensors
                 if isinstance(inputs, tuple):
                     inputs = tuple(t.to(DEVICE) for t in inputs)
                 else:
                     inputs = inputs.to(DEVICE)
                 labels = labels.to(DEVICE)
-
-            optimizer.zero_grad()
-
-            if model_type == "mha_gcn":
-                # For MHA-GCN, process each graph in the batch individually
-                # as the MHA_GCN.forward currently handles one graph.
-                batch_loss = torch.tensor(0.0, device=DEVICE, requires_grad=True)
-                for i in range(inputs[0].shape[0]):
-                    output, _ = model(inputs[0][i], inputs[1][i])
-                    loss = criterion(output.unsqueeze(0), labels[i].unsqueeze(0))
-                    batch_loss += loss
-                batch_loss /= inputs[0].shape[0]
-                batch_loss.backward()
-            else:
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
-                loss.backward()
-
+            
+            loss.backward()
             optimizer.step()
     return model
 
@@ -224,18 +204,7 @@ def evaluate_model(
     Tuple[float, float, float, float],
     Tuple[List[int], List[int]]
 ]:
-    """Evaluates a trained PyTorch model on a test dataset.
-
-    Args:
-        model: The trained PyTorch model to evaluate.
-        test_loader: DataLoader for the test data.
-        model_type: Type of the model ('cnn' or 'mha_gcn') for specific data handling.
-
-    Returns:
-        A tuple containing:
-        - A tuple of (accuracy, precision, recall, f1_score).
-        - A tuple of (all_preds, all_labels).
-    """
+    """Evaluates a trained PyTorch model on a test dataset."""
     model.to(DEVICE)
     model.eval()
     all_preds = []
@@ -243,30 +212,23 @@ def evaluate_model(
     with torch.no_grad():
         for data in test_loader:
             if model_type == "mha_gcn":
-                dwt, adj, labels = data
-                inputs = (dwt.to(DEVICE), adj.to(DEVICE))
+                data = data.to(DEVICE)
+                outputs, _ = model(data.x, data.edge_index, data.batch)
+                preds = torch.argmax(outputs, dim=1)
+                all_preds.extend(preds.cpu().numpy().tolist())
+                all_labels.extend(data.y.cpu().numpy().tolist())
             else: # Covers 'cnn', 'vit', and any other standard model
                 inputs, labels = data
-                # Handle inputs which could be a tensor or a tuple of tensors
                 if isinstance(inputs, tuple):
                     inputs = tuple(t.to(DEVICE) for t in inputs)
                 else:
                     inputs = inputs.to(DEVICE)
-
-            labels = labels.cpu().numpy()
-
-            if model_type == "mha_gcn":
-                # For MHA-GCN, process each graph in the batch individually
-                for i in range(inputs[0].shape[0]):
-                    output, _ = model(inputs[0][i], inputs[1][i])
-                    pred = torch.argmax(output, dim=0)
-                    all_preds.append(int(pred.cpu().numpy()))
-                    all_labels.append(int(labels[i]))
-            else:
+                
+                cpu_labels = labels.cpu().numpy()
                 outputs = model(inputs)
                 preds = torch.argmax(outputs, dim=1)
                 all_preds.extend(preds.cpu().numpy().tolist())
-                all_labels.extend(labels)
+                all_labels.extend(cpu_labels)
 
     accuracy = float(accuracy_score(all_labels, all_preds))
     precision = float(precision_score(

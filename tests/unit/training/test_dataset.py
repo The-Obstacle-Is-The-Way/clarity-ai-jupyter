@@ -3,6 +3,7 @@
 import numpy as np
 import torch
 from src.clarity.training.loop import CustomEEGDataset
+from torch_geometric.data import Data
 
 
 def test_custom_eeg_dataset_initialization(sample_epochs, subject_labels):
@@ -60,29 +61,31 @@ def test_custom_eeg_dataset_getitem_cnn(sample_epochs, subject_labels):
 
 
 def test_custom_eeg_dataset_getitem_mha_gcn(subject_labels):
-    """Test that the dataset __getitem__ method works correctly for MHA-GCN model type."""
+    """Test that the dataset get method works correctly for the MHA-GCN model type."""
     # Mock subject_ids
     subject_ids = list(subject_labels.keys())[:2]
 
     # Create dataset
     dataset = CustomEEGDataset(subject_ids, subject_labels, model_type="mha_gcn")
 
-    # Manually set some test data for MHA-GCN (features and adjacency matrices)
-    # MHA-GCN expects (features, adjacency) tuples as data points
-    features = [np.random.randn(29, 64) for _ in range(3)]  # 29 channels, 64 features
-    adj_matrices = [np.random.randn(29, 29) for _ in range(3)]  # 29x29 adjacency matrices
-    dataset.data = list(zip(features, adj_matrices))
-    dataset.labels = [1, 0, 1]
+    # Manually create and set a PyG Data object
+    node_features = torch.randn(29, 11520) # (num_nodes, feature_dim)
+    edge_index = torch.randint(0, 29, (2, 50)) # Dummy edge index
+    label = torch.tensor(1, dtype=torch.long)
+    graph_data = Data(x=node_features, edge_index=edge_index, y=label)
 
-    # Get an item
-    dwt_features, adj_matrix, label = dataset[1]
-    # Note: CustomEEGDataset.__getitem__ returns a 3-tuple for mha_gcn: (features, adj_matrix, label)
+    dataset.data = [graph_data]
+    dataset.labels = [1] # Kept for len(), though y is in graph_data
 
-    # Check types and shapes
-    assert isinstance(dwt_features, torch.Tensor)
-    assert isinstance(adj_matrix, torch.Tensor)
-    assert isinstance(label, torch.Tensor)
-    assert dwt_features.dim() == 2  # Features reshaped but not completely flattened
-    assert adj_matrix.shape == (29, 29)  # Adjacency matrix
-    assert label.dtype == torch.long
-    assert label.item() == 0  # Index 1 corresponds to label 0 in our mock data
+    # Get the item, which should be the Data object itself
+    retrieved_item = dataset.get(0)
+
+    # Check that the retrieved item is a PyG Data object and has the correct attributes
+    assert isinstance(retrieved_item, Data)
+    assert 'x' in retrieved_item
+    assert 'edge_index' in retrieved_item
+    assert 'y' in retrieved_item
+    assert retrieved_item.x is not None and torch.equal(retrieved_item.x, node_features)
+    assert retrieved_item.edge_index is not None and torch.equal(retrieved_item.edge_index, edge_index)
+    assert isinstance(retrieved_item.y, torch.Tensor)
+    assert retrieved_item.y.item() == 1

@@ -1,6 +1,8 @@
 """Unit tests for the neural network model architectures."""
 
 import torch
+from torch_geometric.data import Data
+from torch_geometric.loader import DataLoader as PyGDataLoader
 from src.clarity.models import MHA_GCN, BaselineCNN
 from src.clarity.training.config import CHANNELS_29, NUM_CLASSES
 
@@ -34,50 +36,51 @@ def test_baseline_cnn_forward():
 
 
 def test_mha_gcn_forward():
-    """Test that the MHA_GCN model properly processes input data and returns attention."""
+    """Test that the MHA_GCN model properly processes a batch of graph data."""
     # Define test parameters
-    node_feature_dim = 64  # Example dimension
+    node_feature_dim = 64
     num_nodes = len(CHANNELS_29)
-    mha_heads = 4 # Should match the default in the model
+    num_classes = NUM_CLASSES
+    batch_size = 4
+    mha_heads = 4
 
-    # Create random input tensors for a single graph
-    # Node features should be of shape (num_nodes, node_feature_dim)
-    node_features = torch.randn(num_nodes, node_feature_dim)
-    adj_matrix = torch.randn(num_nodes, num_nodes)
+    # Create a list of PyG Data objects to form a batch
+    data_list = []
+    for _ in range(batch_size):
+        node_features = torch.randn(num_nodes, node_feature_dim)
+        # Create a random adjacency matrix and convert to edge_index
+        adj = torch.randint(0, 2, (num_nodes, num_nodes)).float()
+        edge_index = adj.nonzero().t().contiguous()
+        data_list.append(Data(x=node_features, edge_index=edge_index))
 
-    # Make adjacency matrix symmetric as it would be in real usage
-    adj_matrix = (adj_matrix + adj_matrix.T) / 2
+    # Use PyG's DataLoader to create a batch
+    loader = PyGDataLoader(data_list, batch_size=batch_size)
+    batch = next(iter(loader))
 
     # Initialize the model
     model = MHA_GCN(
         node_feature_dim=node_feature_dim,
-        num_classes=NUM_CLASSES,
+        num_classes=num_classes,
         mha_heads=mha_heads
     )
-
-    # Set to evaluation mode
     model.eval()
 
-    # Forward pass
+    # Forward pass with the batched data
     with torch.no_grad():
-        logits, attention_weights = model(node_features, adj_matrix)
+        logits, attention_weights = model(batch.x, batch.edge_index, batch.batch)
 
     # --- Check Logits ---
-    # Check output shape (a single prediction for the whole graph)
-    assert logits.shape == (NUM_CLASSES,)
-    # Check output is valid (contains proper logits)
+    # The output shape should now be (batch_size, num_classes)
+    assert logits.shape == (batch_size, num_classes)
     assert not torch.isnan(logits).any()
     assert not torch.isinf(logits).any()
 
     # --- Check Attention Weights ---
     assert attention_weights is not None
-    # The MHA layer inside the model adds a batch dimension of 1.
-    # The output shape is (batch_size, num_heads, seq_len, seq_len)
-    # but the model returns the average over heads. Let's re-check the model code.
-    # The nn.MultiheadAttention returns (attn_output, attn_output_weights)
-    # attn_output_weights shape is (batch_size, seq_len, seq_len)
-    # In our case, seq_len is num_nodes. Batch size is 1.
-    assert attention_weights.shape == (1, num_nodes, num_nodes)
+    # The MHA layer was applied to the entire batch of nodes as one sequence
+    # Input to MHA is (1, total_nodes, features), so output attention is (1, total_nodes, total_nodes)
+    total_nodes = num_nodes * batch_size
+    assert attention_weights.shape == (1, total_nodes, total_nodes)
 
 
 def test_model_parameter_gradients():
