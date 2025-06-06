@@ -91,7 +91,7 @@ class MHA_GCN(nn.Module):
         self,
         node_features: torch.Tensor,
         adj_matrix: torch.Tensor
-    ) -> torch.Tensor:
+    ) -> tuple[torch.Tensor, torch.Tensor | None]:
         """Defines the forward pass of the MHA-GCN model.
 
         This implementation assumes processing one graph at a time.
@@ -102,7 +102,9 @@ class MHA_GCN(nn.Module):
             adj_matrix: Adjacency matrix for the graph.
 
         Returns:
-            Output tensor of shape (num_classes,).
+            A tuple containing:
+            - Output tensor of shape (num_classes,).
+            - Attention weights from the MHA layer.
         """
         # This implementation assumes batch processing is handled outside
         # or by a wrapper.
@@ -125,7 +127,7 @@ class MHA_GCN(nn.Module):
         x_mha_input = x.unsqueeze(0)
 
         # Apply multi-head attention
-        attn_output, _ = self.mha(x_mha_input, x_mha_input, x_mha_input)
+        attn_output, attn_weights = self.mha(x_mha_input, x_mha_input, x_mha_input)
 
         # Handle any numerical instability in attention output
         attn_output = torch.nan_to_num(attn_output, nan=0.0, posinf=1.0, neginf=-1.0)
@@ -138,4 +140,4 @@ class MHA_GCN(nn.Module):
 
         # Final safety check
         out = torch.nan_to_num(out, nan=0.0, posinf=1.0, neginf=-1.0)
-        return out
+        return out, attn_weights

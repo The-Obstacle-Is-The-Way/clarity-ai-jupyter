@@ -184,7 +184,7 @@ def train_model(
                 # as the MHA_GCN.forward currently handles one graph.
                 batch_loss = torch.tensor(0.0, device=DEVICE, requires_grad=True)
                 for i in range(inputs[0].shape[0]):
-                    output = model(inputs[0][i], inputs[1][i])
+                    output, _ = model(inputs[0][i], inputs[1][i])
                     loss = criterion(output.unsqueeze(0), labels[i].unsqueeze(0))
                     batch_loss += loss
                 batch_loss /= inputs[0].shape[0]
@@ -238,7 +238,7 @@ def evaluate_model(
             if model_type == "mha_gcn":
                 # For MHA-GCN, process each graph in the batch individually
                 for i in range(inputs[0].shape[0]):
-                    output = model(inputs[0][i], inputs[1][i])
+                    output, _ = model(inputs[0][i], inputs[1][i])
                     pred = torch.argmax(output, dim=0)
                     all_preds.append(pred.cpu().numpy())
                     all_labels.append(labels[i])
