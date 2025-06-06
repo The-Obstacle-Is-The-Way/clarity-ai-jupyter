@@ -115,7 +115,9 @@ class CustomEEGDataset(Dataset):
 
             for j in range(i, i + num_windows):
                 adj_matrices.append(
-                    compute_adjacency_matrix(processed_epochs[j].get_data(copy=False)[0])
+                    compute_adjacency_matrix(
+                        processed_epochs[j].get_data(copy=False)[0]
+                    )
                 )
             avg_adj = np.mean(adj_matrices, axis=0)
 
