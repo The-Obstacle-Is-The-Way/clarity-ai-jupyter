@@ -5,6 +5,8 @@ import torch
 import torch.nn as nn
 from src.clarity.training.loop import evaluate_model, train_model
 from torch.utils.data import DataLoader, TensorDataset
+from torch_geometric.data import Data, DataLoader as PyGDataLoader
+from torch_geometric.nn import GCNConv
 
 
 class SimpleTestModel(nn.Module):
@@ -17,6 +19,18 @@ class SimpleTestModel(nn.Module):
     def forward(self, x):
         x = torch.relu(self.fc1(x))
         return self.fc2(x)
+
+
+class SimpleGCN(nn.Module):
+    """A very simple GCN model for testing."""
+    def __init__(self, in_channels=16, out_channels=2):
+        super().__init__()
+        self.conv1 = GCNConv(in_channels, out_channels)
+
+    def forward(self, x, edge_index, batch):
+        x = self.conv1(x, edge_index)
+        # A dummy operation that returns logits and None for attention weights
+        return torch.randn(batch.max().item() + 1, 2), None
 
 
 @pytest.fixture
@@ -36,6 +50,21 @@ def simple_model_and_data():
     train_loader = DataLoader(dataset, batch_size=batch_size)
 
     return model, train_loader
+
+
+@pytest.fixture
+def pyg_model_and_data():
+    """Create a simple PyG model and data for testing."""
+    model = SimpleGCN()
+    data_list = [
+        Data(
+            x=torch.randn(10, 16),
+            edge_index=torch.randint(0, 10, (2, 20)),
+            y=torch.tensor([i % 2])
+        ) for i in range(10)
+    ]
+    loader = PyGDataLoader(data_list, batch_size=2)
+    return model, loader
 
 
 def test_train_model(simple_model_and_data):
@@ -90,3 +119,26 @@ def test_evaluate_model(simple_model_and_data):
     assert isinstance(all_labels, list)
     assert len(all_preds) == len(test_loader.dataset)
     assert len(all_labels) == len(test_loader.dataset)
+
+
+def test_train_model_gcn(pyg_model_and_data):
+    """Test train_model with a PyG model."""
+    model, loader = pyg_model_and_data
+    optimizer = torch.optim.Adam(model.parameters())
+    criterion = nn.CrossEntropyLoss()
+
+    trained_model = train_model(
+        model, loader, optimizer, criterion, model_type="mha_gcn", epochs=1
+    )
+    assert trained_model is model
+
+
+def test_evaluate_model_gcn(pyg_model_and_data):
+    """Test evaluate_model with a PyG model."""
+    model, loader = pyg_model_and_data
+    metrics, _ = evaluate_model(model, loader, model_type="mha_gcn")
+    accuracy, precision, recall, f1 = metrics
+    assert 0 <= accuracy <= 1
+    assert 0 <= precision <= 1
+    assert 0 <= recall <= 1
+    assert 0 <= f1 <= 1
