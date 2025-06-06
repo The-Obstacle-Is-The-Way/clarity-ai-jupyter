@@ -26,7 +26,7 @@ class SpectrogramViT(nn.Module):
         self.vit = timm.create_model(
             "vit_base_patch16_224", pretrained=pretrained, num_classes=0
         )
-        
+
         # Replace the head with a new one for our number of classes
         self.vit.head = nn.Linear(self.vit.head.in_features, num_classes)
 

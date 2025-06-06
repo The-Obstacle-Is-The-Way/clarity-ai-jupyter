@@ -18,5 +18,5 @@ pywavelets
 torch-geometric
 
 # Development and Code Quality
-ruff
+ruff==0.5.5
 pyright 

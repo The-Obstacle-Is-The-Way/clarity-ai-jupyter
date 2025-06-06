@@ -24,7 +24,7 @@
 
 # %%
 # CELL 1: Imports
-from typing import Dict, List, TypedDict, Union
+from typing import Dict, List, TypedDict
 
 import matplotlib.pyplot as plt
 import mne
@@ -33,11 +33,11 @@ import seaborn as sns
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from ipywidgets import interact, fixed
+from ipywidgets import fixed, interact
 from scipy.stats import ttest_rel
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import LeaveOneOut
-from src.clarity.data.modma import load_subject_data, preprocess_raw_data, segment_data
+from src.clarity.data.modma import load_subject_data, preprocess_raw_data
 from src.clarity.features import calculate_de_features
 from src.clarity.models import MHA_GCN, BaselineCNN, EEGNet, SpectrogramViT
 
@@ -58,8 +58,8 @@ from src.clarity.training.config import (
 )
 from src.clarity.training.loop import CustomEEGDataset, evaluate_model, train_model
 from torch.utils.data import DataLoader
-from tqdm.notebook import tqdm
 from torch_geometric.loader import DataLoader as PyGDataLoader
+from tqdm.notebook import tqdm
 
 # %% [markdown]
 # ### Cell 2: Setup & Configuration
@@ -309,7 +309,7 @@ try:
         raw_p = preprocess_raw_data(raw_sample.copy(), perform_ica=False)
         epochs_sample = mne.make_fixed_length_epochs(raw_p, duration=2.0, overlap=1.0)
         info_for_topo = epochs_sample.info
-        
+
         # Make the plotting function interactive
         interact(
             plot_topomap_for_band,
@@ -335,25 +335,25 @@ if 'mha_gcn' in all_model_results:
 
     # To visualize attention, we need a trained MHA-GCN model and a sample batch of data.
     # We will re-load a model and a single subject's data for this purpose.
-    
+
     # 1. Instantiate a fresh model
     gcn_model = MHA_GCN(node_feature_dim=15 * 180, num_classes=NUM_CLASSES)
-    
+
     # 2. Load data for a sample subject
     VIS_SUBJECT_ID = '1'
     vis_dataset = CustomEEGDataset([VIS_SUBJECT_ID], labels_dict, model_type='mha_gcn')
-    
+
     if vis_dataset:
         vis_loader = PyGDataLoader(vis_dataset, batch_size=1, shuffle=False) # type: ignore
         sample_batch = next(iter(vis_loader))
         sample_batch = sample_batch.to(DEVICE)
-        
+
         # 3. We can't easily retrieve the trained model from the LOOCV loop.
         # For a stable visualization, it would be best to load saved model weights.
         # Since we are not saving weights in this example, we will pass the data
         # through an *untrained* model to demonstrate the visualization code.
         # The attention patterns will be random but will confirm the code runs.
-        
+
         gcn_model.to(DEVICE)
         gcn_model.eval()
         with torch.no_grad():

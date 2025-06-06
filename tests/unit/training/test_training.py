@@ -5,7 +5,8 @@ import torch
 import torch.nn as nn
 from src.clarity.training.loop import evaluate_model, train_model
 from torch.utils.data import DataLoader, TensorDataset
-from torch_geometric.data import Data, DataLoader as PyGDataLoader
+from torch_geometric.data import Data
+from torch_geometric.data import DataLoader as PyGDataLoader
 from torch_geometric.nn import GCNConv, global_mean_pool
 
 
@@ -14,7 +15,7 @@ class SimpleTestModel(nn.Module):
     def __init__(self, input_size=10, hidden_size=5, output_size=2):
         super().__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
-            self.fc2 = nn.Linear(hidden_size, output_size)
+        self.fc2 = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
         x = torch.relu(self.fc1(x))
