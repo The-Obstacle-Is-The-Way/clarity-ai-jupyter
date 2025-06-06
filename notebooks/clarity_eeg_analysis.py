@@ -25,7 +25,7 @@ from ipywidgets import interact
 from sklearn.model_selection import LeaveOneOut
 from src.clarity.data.modma import load_subject_data, preprocess_raw_data, segment_data
 from src.clarity.features import calculate_de_features
-from src.clarity.models import MHA_GCN, BaselineCNN, EEGNet
+from src.clarity.models import MHA_GCN, BaselineCNN, EEGNet, SpectrogramViT
 from typing import Dict, List, Union
 
 # Local imports from our library
@@ -94,7 +94,7 @@ loo = LeaveOneOut()
 results: Dict[str, List[float]] = {'accuracy': [], 'precision': [], 'recall': [], 'f1': []}
 model: Union[nn.Module, None] = None
 
-MODEL_TO_RUN = 'eegnet'  # Options: 'cnn', 'mha_gcn', 'eegnet'.
+MODEL_TO_RUN = 'vit'  # Options: 'cnn', 'mha_gcn', 'eegnet', 'vit'.
 
 print(f"Starting LOOCV for model: {MODEL_TO_RUN}...")
 for fold, (train_indices, test_indices) in tqdm(
@@ -124,8 +124,10 @@ for fold, (train_indices, test_indices) in tqdm(
         model = MHA_GCN(node_feature_dim=15 * 180, num_classes=NUM_CLASSES)
     elif MODEL_TO_RUN == "eegnet":
         model = EEGNet(num_classes=NUM_CLASSES)
+    elif MODEL_TO_RUN == "vit":
+        model = SpectrogramViT(num_classes=NUM_CLASSES)
     else:
-        raise ValueError(f"Unsupported MODEL_TO_RUN: {MODEL_TO_RUN}. Choose from 'cnn', 'mha_gcn', or 'eegnet'.")
+        raise ValueError(f"Unsupported MODEL_TO_RUN: {MODEL_TO_RUN}. Choose from 'cnn', 'mha_gcn', 'eegnet', or 'vit'.")
 
     optimizer = optim.Adam(model.parameters(), lr=LR)
     criterion = nn.CrossEntropyLoss()

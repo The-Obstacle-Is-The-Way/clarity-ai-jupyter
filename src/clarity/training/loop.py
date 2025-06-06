@@ -200,7 +200,10 @@ def train_model(
 
 def evaluate_model(
     model: nn.Module, test_loader: DataLoader, model_type: str
-) -> Tuple[float, float, float, float]:
+) -> Tuple[
+    Tuple[float, float, float, float],
+    Tuple[List[int], List[int]]
+]:
     """Evaluates a trained PyTorch model on a test dataset.
 
     Args:
@@ -209,7 +212,9 @@ def evaluate_model(
         model_type: Type of the model ('cnn' or 'mha_gcn') for specific data handling.
 
     Returns:
-        A tuple containing (accuracy, precision, recall, f1_score).
+        A tuple containing:
+        - A tuple of (accuracy, precision, recall, f1_score).
+        - A tuple of (all_preds, all_labels).
     """
     model.to(DEVICE)
     model.eval()
@@ -257,4 +262,4 @@ def evaluate_model(
         f"Precision: {precision:.4f}, "
         f"Recall: {recall:.4f}, F1: {f1:.4f}"
     )
-    return accuracy, precision, recall, f1
+    return (accuracy, precision, recall, f1), (all_preds, all_labels)
