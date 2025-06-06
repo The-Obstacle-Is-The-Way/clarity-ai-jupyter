@@ -125,7 +125,9 @@ class CustomEEGDataset(Dataset):
             adj_tensor = torch.tensor(avg_adj, dtype=torch.float32)
             edge_index = adj_tensor.nonzero().t().contiguous()
 
-            node_features = torch.tensor(np.array(dwt_feature_stack), dtype=torch.float32)
+            node_features = torch.tensor(
+                np.array(dwt_feature_stack), dtype=torch.float32
+            )
             # Flatten the node features
             node_features_flat = node_features.reshape(node_features.shape[0], -1)
 
