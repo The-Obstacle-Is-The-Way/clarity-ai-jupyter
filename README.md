@@ -1,8 +1,143 @@
-# Psychiatry Digital Twin - MODMA EEG Analysis
+# Clarity-AI: A Research Sandbox for EEG-based Depression Analysis
 
-This project contains a JupyterLab environment for analyzing the [MODMA dataset](http://modma.lzu.edu.cn/data_sources/sharing/), with a focus on classifying depression levels from EEG signals. The analysis is implemented in `notebooks/clarity_eeg_analysis.py`, a Python script structured to be run as a notebook in modern IDEs like VS Code or JupyterLab.
+*An open-source initiative to build a "Psychiatry Digital Twin" by decoding brain signals to better understand and classify Major Depressive Disorder (MDD).*
 
-It implements several deep learning models based on recent research papers, including a baseline CNN and an MHA-GCN, with a full Leave-One-Out Cross-Validation (LOOCV) training and evaluation pipeline.
+<p align="center">
+  <img alt="Python" src="https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white">
+  <img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-2.0+-ee4c2c?logo=pytorch&logoColor=white">
+  <img alt="MNE" src="https://img.shields.io/badge/MNE-1.6+-green?logo=mne&logoColor=white">
+  <img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg">
+</p>
+
+---
+
+This repository is a comprehensive, high-quality sandbox for applying state-of-the-art deep learning techniques to EEG data for mental health research. It provides a full pipeline—from data preprocessing to model training and evaluation—using the publicly available **MODMA dataset**. Our goal is to create a transparent, reproducible, and extensible platform for researchers, clinicians, and data scientists to accelerate the discovery of objective biomarkers for depression.
+
+## High-Level Workflow
+
+The repository is designed around a modular pipeline that takes raw EEG data and transforms it into actionable insights.
+
+```mermaid
+graph TD
+    A[<B>MODMA Dataset</B><br/>Raw EEG (.set files)] --> B{<B>1. Preprocessing</B><br/>- Band-pass Filtering<br/>- Artifact Removal (ICA)<br/>- Channel Selection};
+    B --> C{<B>2. Feature Engineering</B><br/>- Differential Entropy (DE)<br/>- Discrete Wavelet Transform (DWT)<br/>- Adjacency Matrices (Connectivity)};
+    C --> D[<B>3. Model Training</B><br/>- BaselineCNN<br/>- MHA-GCN (Graph)<br/>- EEGNet<br/>- SpectrogramViT];
+    D --> E{<B>4. Evaluation</B><br/>Leave-One-Out CV<br/>Accuracy, F1-Score<br/>Confusion Matrix};
+    E --> F[<B>5. Interpretation</B><br/>- Topomaps<br/>- GCN Attention<br/>- Statistical Tests];
+```
+
+---
+
+## The Scientific Foundation
+
+### Why EEG for Depression?
+Major Depressive Disorder (MDD) is traditionally diagnosed through subjective clinical interviews. Electroencephalography (EEG) offers a non-invasive, objective window into brain function. By analyzing patterns of neural oscillations and connectivity, we can identify potential electrophysiological biomarkers of depression, paving the way for more precise diagnostics and personalized treatments.
+
+### The MODMA Dataset
+This project uses the **Multi-Modal Open Dataset for Mental-Disorder Analysis (MODMA)**. It contains resting-state EEG data from 53 participants (24 MDD patients and 29 healthy controls), making it an invaluable resource for cross-subject classification tasks.
+
+### Key Biomarkers & Features
+Our models don't just see raw signals; they are trained on scientifically-grounded features known to be relevant in depression research:
+-   **Differential Entropy (DE):** A measure of signal complexity in different frequency bands (Delta, Theta, Alpha, Beta, Gamma), which has been linked to emotional states.
+-   **Discrete Wavelet Transform (DWT):** Captures transient, non-stationary features in the EEG signal across multiple time scales.
+-   **Graph-based Connectivity:** By computing adjacency matrices (e.g., via correlation), we model the brain as a graph, allowing Graph Convolutional Networks (GCNs) to learn from the topological relationships between brain regions.
+
+---
+
+## Technical Architecture
+
+The repository is structured as a modular Python package (`src/clarity`) to ensure code is clean, reusable, and easy to maintain.
+
+### Tech Stack
+-   **Data Handling & Preprocessing:** `MNE-Python`, `NumPy`, `SciPy`
+-   **Deep Learning:** `PyTorch`, `PyTorch Geometric` (for GCNs)
+-   **Modeling & Evaluation:** `scikit-learn`, `timm` (for Vision Transformers)
+-   **Visualization:** `Matplotlib`, `Seaborn`
+-   **Environment:** `JupyterLab`, `Python 3.10+`
+
+### Code Structure
+The `src/clarity` package separates concerns into logical modules, making the codebase easy to navigate and extend.
+
+```mermaid
+graph TD
+    subgraph src/clarity
+        A[<B>data</B><br/>- modma.py<br/>- caching.py]
+        B[<B>features</B><br/>- features.py]
+        C[<B>models</B><br/>- baseline_cnn.py<br/>- mha_gcn.py<br/>- eegnet.py]
+        D[<B>training</B><br/>- config.py<br/>- loop.py]
+    end
+
+    E[<B>notebooks/clarity_eeg_analysis.py</B><br/>Main Experiment Script]
+
+    E --> A
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+```
+
+---
+
+## Key Features
+-   **Rigorous Evaluation:** Implements **Leave-One-Out Cross-Validation (LOOCV)** for robust, unbiased performance assessment on the entire dataset.
+-   **Multiple Model Architectures:**
+    -   `BaselineCNN`: A simple 1D CNN for a solid starting point.
+    -   `MHA_GCN`: A Multi-Head Attention Graph Convolutional Network that learns from brain connectivity.
+    -   `EEGNet`: A state-of-the-art compact CNN designed specifically for EEG signals.
+-   **Reproducible Research:** Enforces reproducibility with fixed random seeds and deterministic CUDA operations.
+-   **Efficient Workflow:** Includes a caching mechanism to save preprocessed data, dramatically speeding up repeated experiments.
+-   **Extensible & Modular:** Designed to be easily extended with new models, features, or even data modalities.
+-   **Interpretability Hooks:** Provides methods for visualizing results (confusion matrices) and model decisions (topomaps, GCN attention weights).
+
+---
+
+## Getting Started
+
+### 1. Create a Python Environment
+We strongly recommend using a virtual environment.
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+# On Windows, use: .venv\Scripts\activate
+```
+
+### 2. Install Dependencies
+For a fully reproducible environment with pinned versions, use `requirements.lock.txt`.
+```bash
+# For a stable, reproducible environment
+pip install -r requirements.lock.txt
+
+# Or for a flexible development environment
+pip install -r requirements.txt
+```
+*Note: If you have trouble with `torch-geometric`, please consult their official installation instructions to install dependencies for your specific OS/CUDA version.*
+
+### 3. Download the MODMA Dataset
+You must request access to the MODMA dataset directly from the researchers.
+-   **Register and request access** at the [official dataset portal](http://modma.lzu.edu.cn/data_sources/sharing/).
+-   Once you receive the download link, place and unpack the archive in the `data/` directory.
+-   The expected file structure is `data/MODMA/EEG_128channel_resting/sub01/rest.set`.
+
+### 4. Launch the Analysis
+With your environment activated, you can run the main analysis script as a notebook.
+```bash
+jupyter lab
+```
+Navigate to `notebooks/clarity_eeg_analysis.py` to open and run the analysis. We recommend using VS Code's Jupyter extension for the best experience.
+
+---
+
+## Roadmap & Future Directions
+This sandbox is an active project. Our roadmap is focused on pushing the boundaries of scientific rigor and technical capability.
+
+-   **Advanced Preprocessing:** Integrate more sophisticated artifact removal techniques and ensure our pipeline is fully configurable.
+-   **Multi-Class Severity Prediction:** Move beyond binary classification (Depressed vs. Control) to predict depression severity levels based on PHQ-9 scores, a more clinically relevant task.
+-   **Expanded Model Zoo:**
+    -   Implement **Vision Transformer (ViT)** models on EEG spectrograms.
+    -   Add **RNN/LSTM-based** models to better capture temporal dynamics.
+-   **Multimodal Fusion:** Incorporate other data modalities from the MODMA dataset (e.g., audio/speech) to build more holistic "digital twin" models.
+-   **Fairness & Bias Audits:** Introduce tools to analyze model performance across different demographic subgroups, ensuring our models are equitable and unbiased.
+-   **Explainable AI (XAI):** Enhance interpretability methods to better understand *why* our models make certain predictions, bridging the gap between deep learning and clinical insight.
 
 ---
 
@@ -14,73 +149,8 @@ The [MODMA dataset](http://modma.lzu.edu.cn/data_sources/sharing/) used in this 
 
 ---
 
-## Setup and Installation
-
-### 1. Create a Python Environment
-
-It is highly recommended to use a virtual environment to manage dependencies.
-
-```bash
-# Create the virtual environment
-python3 -m venv .venv
-
-# Activate it
-source .venv/bin/activate
-
-# On Windows, use:
-# .venv\Scripts\activate
-```
-
-### 2. Install Dependencies
-
-Install all required Python libraries using the `requirements.txt` file. For a fully reproducible environment with pinned versions, use `requirements.lock.txt`.
-
-```bash
-# For a stable, reproducible environment
-pip install -r requirements.lock.txt
-
-# Or for a flexible development environment
-pip install -r requirements.txt
-```
-
-### 3. Download the MODMA Dataset
-
-You must request access to the MODMA dataset directly from the researchers.
-
--   **Register and request access** at the [official dataset portal](http://modma.lzu.edu.cn/data_sources/sharing/).
--   Once you receive the download link, place the archive in the `data/` directory.
--   Unpack the archive. The expected file structure is `data/MODMA/EEG_128channel_resting/sub01/rest.set`.
-
-*Note: The `data/` directory is included in `.gitignore` and should not be committed to version control.*
-
-### 4. Launch JupyterLab
-
-With your environment activated and the data in place, you can launch JupyterLab.
-
-```bash
-jupyter lab
-```
-
-Navigate to `notebooks/clarity_eeg_analysis.py` to open and run the analysis. VS Code's Jupyter extension will also render this file as a notebook automatically.
-
----
-
-## Expected Results
-
-The performance of the models is evaluated using Leave-One-Out Cross-Validation (LOOCV) across all subjects. The primary metrics are accuracy and F1-score for the multi-class severity classification task.
-
--   The `BaselineCNN` provides a solid starting point, demonstrating the viability of using raw EEG signals for this task.
--   `EEGNet` offers a more sophisticated, compact architecture designed specifically for EEG, and is expected to outperform the baseline.
--   The `MHA_GCN` model, which leverages graph-based representations of brain connectivity, is hypothesized to capture more complex relational patterns and yield higher performance.
--   The `SpectrogramViT` explores an alternative modality by treating EEG signals as images, providing a powerful vision-based approach.
-
-After running the notebook (`DEBUG_MODE = False`), a full report including confusion matrices and statistical comparisons will be generated. Expected accuracies are in the range of 60-80%, with the more advanced models pushing the upper end of this range, consistent with state-of-the-art findings in the references below.
-
----
-
 ## Core Scientific References
-
-The methodologies implemented in this repository are grounded in the following key research papers. Users are encouraged to consult them for a deeper understanding of the scientific context.
+The methodologies implemented here are grounded in the following key research papers.
 
 1.  **MODMA Dataset:**
     Cai, H., Yuan, Z., Gao, Y., et al. A multi-modal open dataset for mental-disorder analysis. *Sci Data* **9**, 178 (2022). [https://doi.org/10.1038/s41597-022-01211-x](https://doi.org/10.1038/s41597-022-01211-x)
@@ -91,8 +161,10 @@ The methodologies implemented in this repository are grounded in the following k
 3.  **Graph-based EEG Analysis:**
     Liu, W., Jia, K., & Wang, Z. (2024). Graph-based EEG approach for depression prediction: integrating time-frequency complexity and spatial topology. *Frontiers in Neuroscience*, *18*, 1367212. [https://doi.org/10.3389/fnins.2024.1367212](https://doi.org/10.3389/fnins.2024.1367212)
 
-4.  **Machine Learning Fairness in EEG:**
-    Dang, V. N., Cascarano, A., Mulder, R. H., et al. Fairness and bias correction in machine learning for depression prediction across four study populations. *Sci Rep* **14**, 7848 (2024). [https://doi.org/10.1038/s41598-024-58427-7](https://doi.org/10.1038/s41598-024-58427-7)
+4.  **Multimodal Detection (GCN and Transformer):**
+    Jia, X., Chen, J., Liu, K., Wang, Q., & He, J. (2025). Multimodal depression detection based on an attention graph convolution and transformer. *Mathematical Biosciences and Engineering*, *22*(3), 652-676. [https://doi.org/10.3934/mbe.2025024](https://doi.org/10.3934/mbe.2025024)
 
-5.  **Multimodal Detection (GCN and Transformer):**
-    Jia, X., Chen, J., Liu, K., Wang, Q., & He, J. (2025). Multimodal depression detection based on an attention graph convolution and transformer. *Mathematical Biosciences and Engineering*, *22*(3), 652-676. [https://doi.org/10.3934/mbe.2025024](https://doi.org/10.3934/mbe.2025024) 
+---
+
+## How to Contribute
+We welcome contributions! Please feel free to open an issue or submit a pull request. 
