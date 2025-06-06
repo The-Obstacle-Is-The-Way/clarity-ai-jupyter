@@ -65,7 +65,7 @@ def test_custom_eeg_dataset_getitem_cnn(sample_epochs, subject_labels):
 
 
 def test_custom_eeg_dataset_getitem_mha_gcn(subject_labels):
-    """Test that the dataset get method works correctly for the MHA-GCN model type."""
+    """Test that the dataset __getitem__ method works correctly for the MHA-GCN model type."""
     # Mock subject_ids
     subject_ids = list(subject_labels.keys())[:2]
 
@@ -82,7 +82,7 @@ def test_custom_eeg_dataset_getitem_mha_gcn(subject_labels):
     dataset.labels = [1] # Kept for len(), though y is in graph_data
 
     # Get the item, which should be the Data object itself
-    retrieved_item = dataset.get(0)
+    retrieved_item = dataset[0]
 
     # Check that the retrieved item is a PyG Data object and has the correct attributes
     assert isinstance(retrieved_item, Data)

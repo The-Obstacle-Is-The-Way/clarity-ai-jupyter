@@ -1,5 +1,5 @@
 from typing import Dict, List, Tuple, Union
-from torch_geometric.data import Data, Dataset as PyGDataset
+from torch_geometric.data import Data
 
 import numpy as np
 import torch
@@ -20,7 +20,7 @@ from ..features import (
 from .config import CHANNELS_29, DEVICE, EPOCHS  # Corrected relative import
 
 
-class CustomEEGDataset(PyGDataset):
+class CustomEEGDataset(Dataset):
     """Custom PyTorch Dataset for EEG data.
 
     Handles feature extraction and data loading for different model types.
@@ -40,7 +40,6 @@ class CustomEEGDataset(PyGDataset):
             model_type: Type of model for which data is being prepared
                 ('cnn' or 'mha_gcn').
         """
-        super(CustomEEGDataset, self).__init__()
         from ..data.modma import load_subject_data, preprocess_raw_data, segment_data
 
         self.subject_ids = subject_ids
@@ -137,24 +136,18 @@ class CustomEEGDataset(PyGDataset):
             # self.labels list is no longer needed for GCN as it's in the Data object
             self.labels.append(label) # Keep for now to avoid breaking __len__
 
-    def len(self) -> int:
+    def __len__(self) -> int:
         """Returns the total number of samples in the dataset."""
         return len(self.data)
 
-    def get(self, idx: int) -> Data:
+    def __getitem__(self, idx: int) -> Union[Tuple[torch.Tensor, torch.Tensor], Data]:
         """Retrieves a sample from the dataset at the given index."""
         if self.model_type == "mha_gcn":
             return self.data[idx]
         
-        # For other types, we construct a PyG Data object on the fly.
-        # This ensures a consistent return type for the PyG Dataset.
-        # The standard DataLoader will handle unpacking this correctly.
         data_point = self.data[idx]
         label = self.labels[idx]
-        return Data(
-            x=torch.FloatTensor(data_point), 
-            y=torch.tensor(label, dtype=torch.long)
-        )
+        return torch.FloatTensor(data_point), torch.tensor(label, dtype=torch.long)
 
 
 def train_model(
@@ -177,8 +170,7 @@ def train_model(
                 outputs, _ = model(data.x, data.edge_index, data.batch)
                 loss = criterion(outputs, data.y)
             else: # Covers 'cnn', 'vit', and any other standard model
-                # The standard DataLoader will unpack the 'x' and 'y' from the Data object
-                inputs, labels = data.x, data.y
+                inputs, labels = data
                 if isinstance(inputs, tuple):
                     inputs = tuple(t.to(DEVICE) for t in inputs)
                 else:
@@ -212,8 +204,7 @@ def evaluate_model(
                 all_preds.extend(preds.cpu().numpy().tolist())
                 all_labels.extend(data.y.cpu().numpy().tolist())
             else: # Covers 'cnn', 'vit', and any other standard model
-                # The standard DataLoader will unpack the 'x' and 'y' from the Data object
-                inputs, labels = data.x, data.y
+                inputs, labels = data
                 if isinstance(inputs, tuple):
                     inputs = tuple(t.to(DEVICE) for t in inputs)
                 else:
