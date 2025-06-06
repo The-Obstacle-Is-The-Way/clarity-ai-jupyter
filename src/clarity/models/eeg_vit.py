@@ -38,4 +38,4 @@ class SpectrogramViT(nn.Module):
         Returns:
             The output logits from the model.
         """
-        return self.vit(x) 
+        return self.vit(x)

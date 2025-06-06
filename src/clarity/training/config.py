@@ -1,6 +1,6 @@
 """Centralized configuration settings for the EEG analysis project."""
-import torch
 import numpy as np
+import torch
 
 # --- Reproducibility ---
 SEED = 42

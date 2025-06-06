@@ -62,14 +62,19 @@ def test_full_cnn_pipeline(sample_eeg_data, subject_labels):
     )
 
     # Step 7: Evaluate model
-    metrics = evaluate_model(trained_model, dataloader, model_type="cnn")
+    metrics_tuple, preds_and_labels_tuple = evaluate_model(trained_model, dataloader, model_type="cnn")
 
     # Verify the metrics are returned properly
-    assert len(metrics) == 4
-    accuracy, precision, recall, f1 = metrics
+    assert len(metrics_tuple) == 4
+    accuracy, precision, recall, f1 = metrics_tuple
 
     # Metrics should be within valid range
     assert 0 <= accuracy <= 1
     assert 0 <= precision <= 1
     assert 0 <= recall <= 1
     assert 0 <= f1 <= 1
+
+    # Verify the predictions and labels
+    assert len(preds_and_labels_tuple) == 2
+    assert isinstance(preds_and_labels_tuple[0], list)
+    assert isinstance(preds_and_labels_tuple[1], list)

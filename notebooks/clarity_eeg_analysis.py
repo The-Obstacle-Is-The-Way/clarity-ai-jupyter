@@ -24,21 +24,22 @@
 
 # %%
 # CELL 1: Imports
+from typing import Dict, List, TypedDict, Union
+
 import matplotlib.pyplot as plt
 import mne
 import numpy as np
+import seaborn as sns
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from ipywidgets import interact
+from scipy.stats import ttest_rel
+from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import LeaveOneOut
 from src.clarity.data.modma import load_subject_data, preprocess_raw_data, segment_data
 from src.clarity.features import calculate_de_features
 from src.clarity.models import MHA_GCN, BaselineCNN, EEGNet, SpectrogramViT
-from typing import Dict, List, Union, TypedDict
-import seaborn as sns
-from sklearn.metrics import confusion_matrix
-from scipy.stats import ttest_rel
 
 # Local imports from our library
 # Ensure 'src' is in PYTHONPATH or the notebook is run from project root
@@ -80,11 +81,16 @@ print(f"Using device: {DEVICE}")
 subject_ids_all = [str(i) for i in range(1, NUM_SUBJECTS + 1)]
 
 def get_severity_class(score):
-    if 0 <= score <= 4: return 0  # Normal
-    if 5 <= score <= 9: return 1  # Mild
-    if 10 <= score <= 14: return 2 # Moderate
-    if 15 <= score <= 19: return 3 # Moderate to Major
-    return 4  # Major
+    if 0 <= score <= 4:
+        return 0  # Normal
+    elif 5 <= score <= 9:
+        return 1  # Mild
+    elif 10 <= score <= 14:
+        return 2 # Moderate
+    elif 15 <= score <= 19:
+        return 3 # Moderate to Major
+    else:
+        return 4  # Major
 
 # Create labels based on multi-class severity
 labels_dict = {
@@ -176,7 +182,7 @@ for model_name in MODELS_TO_RUN:
         results['precision'].append(prec)
         results['recall'].append(rec)
         results['f1'].append(f1)
-    
+
     result_data: ModelResult = {
         'results': results,
         'preds': all_fold_preds,
@@ -302,16 +308,16 @@ else:
 # This cell runs only if the last trained model in the comparison was MHA_GCN.
 if 'model' in locals() and isinstance(model, MHA_GCN):
     print("\n--- Visualizing MHA-GCN Attention ---")
-    
+
     # Re-create a test loader for one subject to get a sample
     # Note: This uses the last `test_subject_ids` from the LOOCV loop.
     if 'test_subject_ids' in locals() and test_subject_ids:
         vis_dataset = CustomEEGDataset(test_subject_ids, labels_dict, model_type='mha_gcn')
         vis_loader = DataLoader(vis_dataset, batch_size=1, shuffle=False)
-        
+
         sample_data = next(iter(vis_loader))
         dwt, adj, label = sample_data
-        
+
         model.to(DEVICE)
         model.eval()
         with torch.no_grad():

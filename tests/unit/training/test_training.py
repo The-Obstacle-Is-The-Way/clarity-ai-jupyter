@@ -73,12 +73,20 @@ def test_evaluate_model(simple_model_and_data):
     model, test_loader = simple_model_and_data
 
     # Run evaluation
-    accuracy, precision, recall, f1 = evaluate_model(
+    metrics, preds_and_labels = evaluate_model(
         model, test_loader, model_type="cnn"
     )
+    accuracy, precision, recall, f1 = metrics
+    all_preds, all_labels = preds_and_labels
 
     # Verify the metrics are within expected ranges
     assert 0 <= accuracy <= 1
     assert 0 <= precision <= 1
     assert 0 <= recall <= 1
     assert 0 <= f1 <= 1
+
+    # Verify the returned predictions and labels
+    assert isinstance(all_preds, list)
+    assert isinstance(all_labels, list)
+    assert len(all_preds) == len(test_loader.dataset)
+    assert len(all_labels) == len(test_loader.dataset)

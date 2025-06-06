@@ -8,9 +8,14 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 from torch.utils.data import DataLoader, Dataset
 from tqdm.notebook import tqdm
 
+from ..data.caching import load_from_cache, save_to_cache
+
 # Import data functions inside methods to avoid circular imports
-from ..features import compute_adjacency_matrix, extract_dwt_features, extract_stft_spectrogram_eeg
-from ..data.caching import save_to_cache, load_from_cache
+from ..features import (
+    compute_adjacency_matrix,
+    extract_dwt_features,
+    extract_stft_spectrogram_eeg,
+)
 from .config import CHANNELS_29, DEVICE, EPOCHS  # Corrected relative import
 
 
@@ -34,71 +39,86 @@ class CustomEEGDataset(Dataset):
             model_type: Type of model for which data is being prepared
                 ('cnn' or 'mha_gcn').
         """
-        # Import here to avoid circular imports
         from ..data.modma import load_subject_data, preprocess_raw_data, segment_data
 
         self.subject_ids = subject_ids
         self.labels_dict = labels_dict
         self.model_type = model_type
-
-        self.data = []
-        self.labels = []
+        self.data: list = []
+        self.labels: list = []
 
         print(f"Loading data for {model_type}...")
         for subj_id in tqdm(self.subject_ids):
-            # --- Caching Logic ---
-            cached_data = load_from_cache(subj_id, self.model_type)
-            if cached_data is not None:
-                processed_epochs, label = cached_data
-            else:
-                raw = load_subject_data(subj_id)
-                if raw is None:
-                    continue
+            processed_epochs, label = self._load_and_process_subject(
+                subj_id, segment_data, load_subject_data, preprocess_raw_data
+            )
+            if processed_epochs is None:
+                continue
 
-                # The `perform_ica` flag from Module 1 is now available
-                # We can set it to False for faster debugging if needed,
-                # but for now we'll leave it as default (True)
-                raw_p = preprocess_raw_data(raw)
-                processed_epochs = segment_data(raw_p)
-                label = self.labels_dict[subj_id]
-                # Cache the segmented data before feature extraction
-                save_to_cache((processed_epochs, label), subj_id, self.model_type)
-            # --- End Caching Logic ---
+            self._extract_features(processed_epochs, label)
 
-            if self.model_type == "vit":
-                for epoch_item in processed_epochs:
-                    spectrogram = extract_stft_spectrogram_eeg(epoch_item[0])
-                    self.data.append(spectrogram)
-                    self.labels.append(label)
+    def _load_and_process_subject(
+        self, subj_id, segment_data, load_subject_data, preprocess_raw_data
+    ):
+        """Loads and preprocesses data for a single subject, using cache."""
+        cached_data = load_from_cache(subj_id, self.model_type)
+        if cached_data is not None:
+            return cached_data
 
-            elif self.model_type == "mha_gcn":
-                # TODO: Consider making num_windows a configurable parameter
-                num_windows = 180  # Number of 2s windows to stack for MHA-GCN features
-                for i in range(len(processed_epochs) - num_windows + 1):
-                    dwt_feature_stack = []
-                    adj_matrices = []
-                    for ch_idx in range(len(CHANNELS_29)):
-                        channel_dwt_features = [
-                            extract_dwt_features(
-                                processed_epochs[j].get_data(copy=False)[0, ch_idx, :]
-                            )
-                            for j in range(i, i + num_windows)
-                        ]
-                        dwt_feature_stack.append(np.array(channel_dwt_features).T)
+        raw = load_subject_data(subj_id)
+        if raw is None:
+            return None, None
 
-                    for j in range(i, i + num_windows):
-                        adj_matrices.append(
-                            compute_adjacency_matrix(processed_epochs[j].get_data(copy=False)[0])
-                        )
-                    avg_adj = np.mean(adj_matrices, axis=0)
+        raw_p = preprocess_raw_data(raw)
+        processed_epochs = segment_data(raw_p)
+        label = self.labels_dict[subj_id]
+        save_to_cache((processed_epochs, label), subj_id, self.model_type)
+        return processed_epochs, label
 
-                    self.data.append((np.array(dwt_feature_stack), avg_adj))
-                    self.labels.append(label)
-            else:  # Default is 'cnn'
-                for epoch_item in processed_epochs:
-                    epoch_data = epoch_item
-                    self.data.append(epoch_data)
-                    self.labels.append(label)
+    def _extract_features(self, processed_epochs, label):
+        """Extracts features based on the model type."""
+        if self.model_type == "vit":
+            self._process_vit_data(processed_epochs, label)
+        elif self.model_type == "mha_gcn":
+            self._process_gcn_data(processed_epochs, label)
+        else:  # Default is 'cnn'
+            self._process_cnn_data(processed_epochs, label)
+
+    def _process_cnn_data(self, processed_epochs, label):
+        """Processes data for the baseline CNN model."""
+        for epoch_item in processed_epochs:
+            self.data.append(epoch_item)
+            self.labels.append(label)
+
+    def _process_vit_data(self, processed_epochs, label):
+        """Processes data for the Vision Transformer model."""
+        for epoch_item in processed_epochs:
+            spectrogram = extract_stft_spectrogram_eeg(epoch_item[0])
+            self.data.append(spectrogram)
+            self.labels.append(label)
+
+    def _process_gcn_data(self, processed_epochs, label):
+        """Processes data for the MHA-GCN model."""
+        num_windows = 180
+        for i in range(len(processed_epochs) - num_windows + 1):
+            dwt_feature_stack = []
+            adj_matrices = []
+            for ch_idx in range(len(CHANNELS_29)):
+                channel_dwt_features = [
+                    extract_dwt_features(
+                        processed_epochs[j].get_data(copy=False)[0, ch_idx, :]
+                    )
+                    for j in range(i, i + num_windows)
+                ]
+                dwt_feature_stack.append(np.array(channel_dwt_features).T)
+
+            for j in range(i, i + num_windows):
+                adj_matrices.append(
+                    compute_adjacency_matrix(processed_epochs[j].get_data(copy=False)[0])
+                )
+            avg_adj = np.mean(adj_matrices, axis=0)
+            self.data.append((np.array(dwt_feature_stack), avg_adj))
+            self.labels.append(label)
 
     def __len__(self) -> int:
         """Returns the total number of samples in the dataset."""
@@ -240,12 +260,12 @@ def evaluate_model(
                 for i in range(inputs[0].shape[0]):
                     output, _ = model(inputs[0][i], inputs[1][i])
                     pred = torch.argmax(output, dim=0)
-                    all_preds.append(pred.cpu().numpy())
-                    all_labels.append(labels[i])
+                    all_preds.append(int(pred.cpu().numpy()))
+                    all_labels.append(int(labels[i]))
             else:
                 outputs = model(inputs)
                 preds = torch.argmax(outputs, dim=1)
-                all_preds.extend(preds.cpu().numpy())
+                all_preds.extend(preds.cpu().numpy().tolist())
                 all_labels.extend(labels)
 
     accuracy = float(accuracy_score(all_labels, all_preds))

@@ -10,7 +10,6 @@ import os
 import mne
 import numpy as np
 
-
 # Import only what's needed at module level to avoid circular imports
 
 def load_subject_data(subject_id):
