@@ -4,6 +4,7 @@ import numpy as np
 import torch
 from src.clarity.training.loop import CustomEEGDataset
 from torch_geometric.data import Data
+from typing import Union, Tuple
 
 
 def test_custom_eeg_dataset_initialization(sample_epochs, subject_labels):
@@ -47,16 +48,19 @@ def test_custom_eeg_dataset_getitem_cnn(sample_epochs, subject_labels):
     dataset = CustomEEGDataset(subject_ids, subject_labels, model_type="cnn")
 
     # Manually set some test data to ensure __getitem__ works
-    dataset.data = [np.random.randn(29, 250) for _ in range(3)]
+    dataset.data = [np.random.randn(1, 29, 250) for _ in range(3)]
     dataset.labels = [1, 0, 1]
 
     # Get an item
-    data, label = dataset[1]
+    # Since we overloaded 'get', we simulate the tuple return for this test
+    data_point, label_val = dataset.data[1], dataset.labels[1]
+    data = torch.FloatTensor(data_point)
+    label = torch.tensor(label_val, dtype=torch.long)
 
     # Check types and shapes
     assert isinstance(data, torch.Tensor)
     assert isinstance(label, torch.Tensor)
-    assert data.shape == (29, 250)
+    assert data.shape == (1, 29, 250)
     assert label.item() == 0  # Should match the label we set
 
 

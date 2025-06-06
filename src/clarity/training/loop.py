@@ -141,27 +141,20 @@ class CustomEEGDataset(PyGDataset):
         """Returns the total number of samples in the dataset."""
         return len(self.data)
 
-    def get(self, idx: int) -> Union[
-        Tuple[torch.Tensor, torch.Tensor],
-        Data
-    ]:
+    def get(self, idx: int) -> Data:
         """Retrieves a sample from the dataset at the given index."""
         if self.model_type == "mha_gcn":
             return self.data[idx]
-
+        
+        # For other types, we construct a PyG Data object on the fly.
+        # This ensures a consistent return type for the PyG Dataset.
+        # The standard DataLoader will handle unpacking this correctly.
         data_point = self.data[idx]
         label = self.labels[idx]
-
-        if self.model_type in ["cnn", "vit"]:
-            # This part is for standard torch DataLoaders, not PyG
-            # We return a tuple, which is not a PyG Data object.
-            # This is a bit of a hack to support both in one class.
-            return torch.FloatTensor(data_point), torch.tensor(label, dtype=torch.long)
-        
-        # This path should not be hit if model_type is one of the handled ones.
-        # However, to satisfy the abstract nature of PyG's get, we return something.
-        # A proper implementation might split this into two Dataset classes.
-        return self.data[idx]
+        return Data(
+            x=torch.FloatTensor(data_point), 
+            y=torch.tensor(label, dtype=torch.long)
+        )
 
 
 def train_model(
@@ -184,7 +177,8 @@ def train_model(
                 outputs, _ = model(data.x, data.edge_index, data.batch)
                 loss = criterion(outputs, data.y)
             else: # Covers 'cnn', 'vit', and any other standard model
-                inputs, labels = data
+                # The standard DataLoader will unpack the 'x' and 'y' from the Data object
+                inputs, labels = data.x, data.y
                 if isinstance(inputs, tuple):
                     inputs = tuple(t.to(DEVICE) for t in inputs)
                 else:
@@ -218,7 +212,8 @@ def evaluate_model(
                 all_preds.extend(preds.cpu().numpy().tolist())
                 all_labels.extend(data.y.cpu().numpy().tolist())
             else: # Covers 'cnn', 'vit', and any other standard model
-                inputs, labels = data
+                # The standard DataLoader will unpack the 'x' and 'y' from the Data object
+                inputs, labels = data.x, data.y
                 if isinstance(inputs, tuple):
                     inputs = tuple(t.to(DEVICE) for t in inputs)
                 else:
