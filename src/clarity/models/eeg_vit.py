@@ -28,7 +28,8 @@ class SpectrogramViT(nn.Module):
         )
 
         # Replace the head with a new one for our number of classes
-        self.vit.head = nn.Linear(self.vit.head.in_features, num_classes)
+        n_features = self.vit.num_features
+        self.vit.head = nn.Linear(n_features, num_classes)
 
     def forward(self, x):
         """
