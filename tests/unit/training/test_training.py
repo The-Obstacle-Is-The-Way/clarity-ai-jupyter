@@ -6,7 +6,7 @@ import torch.nn as nn
 from src.clarity.training.loop import evaluate_model, train_model
 from torch.utils.data import DataLoader, TensorDataset
 from torch_geometric.data import Data, DataLoader as PyGDataLoader
-from torch_geometric.nn import GCNConv
+from torch_geometric.nn import GCNConv, global_mean_pool
 
 
 class SimpleTestModel(nn.Module):
@@ -14,7 +14,7 @@ class SimpleTestModel(nn.Module):
     def __init__(self, input_size=10, hidden_size=5, output_size=2):
         super().__init__()
         self.fc1 = nn.Linear(input_size, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, output_size)
+            self.fc2 = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
         x = torch.relu(self.fc1(x))
@@ -29,8 +29,12 @@ class SimpleGCN(nn.Module):
 
     def forward(self, x, edge_index, batch):
         x = self.conv1(x, edge_index)
-        # A dummy operation that returns logits and None for attention weights
-        return torch.randn(batch.max().item() + 1, 2), None
+        # In a real model, you would pool the node features per graph.
+        # Here, we'll just create a dummy output of the correct shape.
+        # We need to ensure the output is linked to the computation graph.
+        # A simple way is to sum the pooled features.
+        pooled_x = global_mean_pool(x, batch)
+        return pooled_x, None
 
 
 @pytest.fixture

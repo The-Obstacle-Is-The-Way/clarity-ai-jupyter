@@ -22,11 +22,13 @@ class SpectrogramViT(nn.Module):
             pretrained: Whether to load a model pre-trained on ImageNet.
         """
         super().__init__()
-        # Load a pre-trained Vision Transformer model
-        # 'vit_base_patch16_224' is a standard choice.
+        # Load a pre-trained Vision Transformer model, but without the final classifier
         self.vit = timm.create_model(
-            "vit_base_patch16_224", pretrained=pretrained, num_classes=num_classes
+            "vit_base_patch16_224", pretrained=pretrained, num_classes=0
         )
+        
+        # Replace the head with a new one for our number of classes
+        self.vit.head = nn.Linear(self.vit.head.in_features, num_classes)
 
     def forward(self, x):
         """
