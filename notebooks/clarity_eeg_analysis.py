@@ -47,6 +47,10 @@ from tqdm.notebook import tqdm
 # All parameters are imported from `src/clarity/training/config.py`.
 
 # %%
+# --- Development Flags ---
+DEBUG_MODE = True # If True, runs on a small subset of subjects for quick testing.
+# -------------------------
+
 np.random.seed(SEED)
 torch.manual_seed(SEED)
 if torch.cuda.is_available():
@@ -58,6 +62,10 @@ print(f"Using device: {DEVICE}")
 
 subject_ids_all = [str(i) for i in range(1, NUM_SUBJECTS + 1)]
 labels_dict = {i: 1 if int(i) <= 24 else 0 for i in subject_ids_all}
+
+if DEBUG_MODE:
+    subject_ids_all = subject_ids_all[:3]
+    print(f"!!! RUNNING IN DEBUG MODE on {len(subject_ids_all)} subjects !!!")
 
 # %% [markdown]
 # ### Cell 3: Main Experiment Loop (LOOCV)

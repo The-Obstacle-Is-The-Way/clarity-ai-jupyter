@@ -59,9 +59,9 @@ def _select_channels(raw):
 def _apply_filters(raw):
     """Apply frequency filters to raw data with adaptive parameters.
 
-    Implements adaptive filtering with parameters that adjust to signal length
-    to ensure signal integrity,
-    for HIPAA-compliant analysis.
+    Implements a 1-40 Hz band-pass filter and a 50 Hz notch filter to remove
+    DC drifts and high-frequency noise, aligning with standard EEG
+    preprocessing pipelines.
 
     Args:
         raw: MNE Raw object containing EEG data
@@ -70,7 +70,7 @@ def _apply_filters(raw):
         MNE Raw object with filters applied
     """
     # Apply high-pass filter with appropriate parameters
-    raw = raw.copy().filter(l_freq=1, h_freq=None)
+    raw = raw.copy().filter(l_freq=1, h_freq=40)
 
     # Calculate signal properties
     n_times = raw.n_times  # Number of time points
@@ -138,12 +138,13 @@ def _detect_eog_automatically(raw, ica):
         return []
 
 
-def preprocess_raw_data(raw):
-    """Applies channel selection, filtering, and ICA to the raw MNE object.
+def preprocess_raw_data(raw, perform_ica: bool = True):
+    """Applies channel selection, filtering, and optionally ICA to the raw MNE object.
     This function orchestrates the preprocessing pipeline using specialized
     functions for each step.
     Args:
         raw: Raw MNE object containing EEG data
+        perform_ica: If True, applies ICA for artifact removal. Defaults to True.
 
     Returns:
         Preprocessed MNE Raw object
@@ -152,6 +153,11 @@ def preprocess_raw_data(raw):
     raw = _select_channels(raw)
     # Step 2: Apply filters
     raw = _apply_filters(raw)
+
+    if not perform_ica:
+        print("Skipping ICA artifact removal as per configuration.")
+        return raw
+
     # Step 3: Apply ICA for artifact removal (primarily EOG)
     # Dynamically set n_components to be min(20, num_channels)
     # Subtract 1 to ensure it's always less than the number of channels

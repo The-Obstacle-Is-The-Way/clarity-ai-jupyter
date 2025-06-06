@@ -10,6 +10,7 @@ from tqdm.notebook import tqdm
 
 # Import data functions inside methods to avoid circular imports
 from ..features import compute_adjacency_matrix, extract_dwt_features
+from ..data.caching import save_to_cache, load_from_cache
 from .config import CHANNELS_29, DEVICE, EPOCHS  # Corrected relative import
 
 
@@ -45,24 +46,35 @@ class CustomEEGDataset(Dataset):
 
         print(f"Loading data for {model_type}...")
         for subj_id in tqdm(self.subject_ids):
-            raw = load_subject_data(subj_id)
-            if raw is None:
-                continue
+            # --- Caching Logic ---
+            cached_data = load_from_cache(subj_id, self.model_type)
+            if cached_data is not None:
+                processed_epochs, label = cached_data
+            else:
+                raw = load_subject_data(subj_id)
+                if raw is None:
+                    continue
 
-            raw_p = preprocess_raw_data(raw)
-            epochs = segment_data(raw_p)
-            label = self.labels_dict[subj_id]
+                # The `perform_ica` flag from Module 1 is now available
+                # We can set it to False for faster debugging if needed,
+                # but for now we'll leave it as default (True)
+                raw_p = preprocess_raw_data(raw)
+                processed_epochs = segment_data(raw_p)
+                label = self.labels_dict[subj_id]
+                # Cache the segmented data before feature extraction
+                save_to_cache((processed_epochs, label), subj_id, self.model_type)
+            # --- End Caching Logic ---
 
             if self.model_type == "mha_gcn":
                 # TODO: Consider making num_windows a configurable parameter
                 num_windows = 180  # Number of 2s windows to stack for MHA-GCN features
-                for i in range(len(epochs) - num_windows + 1):
+                for i in range(len(processed_epochs) - num_windows + 1):
                     dwt_feature_stack = []
                     adj_matrices = []
                     for ch_idx in range(len(CHANNELS_29)):
                         channel_dwt_features = [
                             extract_dwt_features(
-                                epochs[j].get_data(copy=False)[0, ch_idx, :]
+                                processed_epochs[j].get_data(copy=False)[0, ch_idx, :]
                             )
                             for j in range(i, i + num_windows)
                         ]
@@ -70,14 +82,14 @@ class CustomEEGDataset(Dataset):
 
                     for j in range(i, i + num_windows):
                         adj_matrices.append(
-                            compute_adjacency_matrix(epochs[j].get_data(copy=False)[0])
+                            compute_adjacency_matrix(processed_epochs[j].get_data(copy=False)[0])
                         )
                     avg_adj = np.mean(adj_matrices, axis=0)
 
                     self.data.append((np.array(dwt_feature_stack), avg_adj))
                     self.labels.append(label)
             else:
-                for epoch_item in epochs:
+                for epoch_item in processed_epochs:
                     epoch_data = epoch_item
                     self.data.append(epoch_data)
                     self.labels.append(label)

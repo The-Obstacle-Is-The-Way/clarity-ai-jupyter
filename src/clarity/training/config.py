@@ -9,9 +9,14 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # --- Data Configuration ---
 DATA_DIR = "./data/MODMA/"  # Path to the MODMA dataset
+CACHE_DIR = "./data/processed_cache/"  # Directory to store cached data
 NUM_SUBJECTS = 53  # Total number of subjects in the MODMA dataset
 
 # --- EEG Configuration ---
+# The 29 channels selected correspond to a standard 10-20 system layout,
+# covering key cortical areas while excluding peripheral channels that are
+# often noisier. This subset is chosen to align with common practices in
+# EEG depression research for better comparability.
 CHANNELS_29 = [
     "F7",
     "F3",
