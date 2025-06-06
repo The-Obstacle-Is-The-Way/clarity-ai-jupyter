@@ -4,10 +4,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from ...clarity.training.config import NUM_CLASSES
+
 
 class BaselineCNN(nn.Module):
     """A baseline 1D CNN model for EEG signal classification."""
-    def __init__(self, in_channels: int = 29, num_classes: int = 4):
+    def __init__(self, in_channels: int = 29, num_classes: int = NUM_CLASSES):
         """Initializes the BaselineCNN model.
 
         Args:

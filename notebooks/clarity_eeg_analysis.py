@@ -25,16 +25,19 @@ from ipywidgets import interact
 from sklearn.model_selection import LeaveOneOut
 from src.clarity.data.modma import load_subject_data, preprocess_raw_data, segment_data
 from src.clarity.features import calculate_de_features
-from src.clarity.models import MHA_GCN, BaselineCNN
+from src.clarity.models import MHA_GCN, BaselineCNN, EEGNet
+from typing import Dict, List, Union
 
 # Local imports from our library
 # Ensure 'src' is in PYTHONPATH or the notebook is run from project root
 from src.clarity.training.config import (
     BATCH_SIZE,
+    BDI_SCORES,
     DEVICE,
     EPOCHS,
     FREQ_BANDS,
     LR,
+    NUM_CLASSES,
     NUM_SUBJECTS,
     SEED,
 )
@@ -61,10 +64,25 @@ if torch.cuda.is_available():
 print(f"Using device: {DEVICE}")
 
 subject_ids_all = [str(i) for i in range(1, NUM_SUBJECTS + 1)]
-labels_dict = {i: 1 if int(i) <= 24 else 0 for i in subject_ids_all}
+
+def get_severity_class(score):
+    if 0 <= score <= 4: return 0  # Normal
+    if 5 <= score <= 9: return 1  # Mild
+    if 10 <= score <= 14: return 2 # Moderate
+    if 15 <= score <= 19: return 3 # Moderate to Major
+    return 4  # Major
+
+# Create labels based on multi-class severity
+labels_dict = {
+    subj_id: get_severity_class(score)
+    for subj_id, score in BDI_SCORES.items()
+}
 
 if DEBUG_MODE:
-    subject_ids_all = subject_ids_all[:3]
+    # Filter subject_ids_all AND labels_dict for debug mode
+    debug_subjects = subject_ids_all[:3]
+    labels_dict = {k: v for k, v in labels_dict.items() if k in debug_subjects}
+    subject_ids_all = debug_subjects
     print(f"!!! RUNNING IN DEBUG MODE on {len(subject_ids_all)} subjects !!!")
 
 # %% [markdown]
@@ -73,10 +91,10 @@ if DEBUG_MODE:
 
 # %%
 loo = LeaveOneOut()
-results = {'accuracy': [], 'precision': [], 'recall': [], 'f1': []}
-model = None  # Initialize model to None
+results: Dict[str, List[float]] = {'accuracy': [], 'precision': [], 'recall': [], 'f1': []}
+model: Union[nn.Module, None] = None
 
-MODEL_TO_RUN = 'cnn'  # Options: 'cnn', 'mha_gcn'. This determines the model and data processing.
+MODEL_TO_RUN = 'eegnet'  # Options: 'cnn', 'mha_gcn', 'eegnet'.
 
 print(f"Starting LOOCV for model: {MODEL_TO_RUN}...")
 for fold, (train_indices, test_indices) in tqdm(
@@ -101,11 +119,13 @@ for fold, (train_indices, test_indices) in tqdm(
     test_loader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=False)
 
     if MODEL_TO_RUN == "cnn":
-        model = BaselineCNN()
+        model = BaselineCNN(num_classes=NUM_CLASSES)
     elif MODEL_TO_RUN == "mha_gcn":
-        model = MHA_GCN(node_feature_dim=15 * 180)
+        model = MHA_GCN(node_feature_dim=15 * 180, num_classes=NUM_CLASSES)
+    elif MODEL_TO_RUN == "eegnet":
+        model = EEGNet(num_classes=NUM_CLASSES)
     else:
-        raise ValueError(f"Unsupported MODEL_TO_RUN: {MODEL_TO_RUN}. Choose 'cnn' or 'mha_gcn'.")
+        raise ValueError(f"Unsupported MODEL_TO_RUN: {MODEL_TO_RUN}. Choose from 'cnn', 'mha_gcn', or 'eegnet'.")
 
     optimizer = optim.Adam(model.parameters(), lr=LR)
     criterion = nn.CrossEntropyLoss()

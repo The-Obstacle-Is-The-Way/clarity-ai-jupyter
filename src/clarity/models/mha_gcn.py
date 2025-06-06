@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from ...clarity.training.config import NUM_CLASSES
+
 
 class SimpleGCNConv(nn.Module):
     """A simple GCN layer implementation."""
@@ -64,7 +66,7 @@ class MHA_GCN(nn.Module):
         gcn1_out: int = 128,
         gcn2_out: int = 512,
         mha_heads: int = 4,
-        num_classes: int = 2,
+        num_classes: int = NUM_CLASSES,
     ):
         """Initializes the MHA-GCN model.
 

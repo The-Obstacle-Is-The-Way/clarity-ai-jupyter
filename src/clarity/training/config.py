@@ -1,5 +1,6 @@
 """Centralized configuration settings for the EEG analysis project."""
 import torch
+import numpy as np
 
 # --- Reproducibility ---
 SEED = 42
@@ -69,8 +70,14 @@ DEPRESSION_LEVELS = {
     "Moderate to Major": (15, 19),
     "Major": (20, 27),
 }  # Mapping of BDI-II scores to depression severity levels
-# Number of classes for classification (depressed/control)
-NUM_CLASSES = 2
+
+# FAKE BDI SCORES FOR DEMONSTRATION - REPLACE WITH REAL DATA
+# This dictionary should be populated with the actual BDI scores for each subject.
+# The scores are necessary for multi-class severity classification.
+BDI_SCORES = {str(i): np.random.randint(0, 28) for i in range(1, NUM_SUBJECTS + 1)}
+
+# Number of classes for classification (5 levels of severity)
+NUM_CLASSES = 5
 BATCH_SIZE = 4
 EPOCHS = 100
 LR = 0.001  # Learning rate for the optimizer
