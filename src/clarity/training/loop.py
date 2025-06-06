@@ -228,6 +228,7 @@ def evaluate_model(
         f"Epoch metrics - "
         f"Accuracy: {accuracy:.4f}, "
         f"Precision: {precision:.4f}, "
-        f"Recall: {recall:.4f}, F1: {f1:.4f}"
+        f"Recall: {recall:.4f}, "
+        f"F1: {f1:.4f}"
     )
     return (accuracy, precision, recall, f1), (all_preds, all_labels)
