@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm.notebook import tqdm
 
 # Import data functions inside methods to avoid circular imports
-from ..features import compute_adjacency_matrix, extract_dwt_features
+from ..features import compute_adjacency_matrix, extract_dwt_features, extract_stft_spectrogram_eeg
 from ..data.caching import save_to_cache, load_from_cache
 from .config import CHANNELS_29, DEVICE, EPOCHS  # Corrected relative import
 
@@ -65,7 +65,13 @@ class CustomEEGDataset(Dataset):
                 save_to_cache((processed_epochs, label), subj_id, self.model_type)
             # --- End Caching Logic ---
 
-            if self.model_type == "mha_gcn":
+            if self.model_type == "vit":
+                for epoch_item in processed_epochs:
+                    spectrogram = extract_stft_spectrogram_eeg(epoch_item[0])
+                    self.data.append(spectrogram)
+                    self.labels.append(label)
+
+            elif self.model_type == "mha_gcn":
                 # TODO: Consider making num_windows a configurable parameter
                 num_windows = 180  # Number of 2s windows to stack for MHA-GCN features
                 for i in range(len(processed_epochs) - num_windows + 1):
@@ -88,7 +94,7 @@ class CustomEEGDataset(Dataset):
 
                     self.data.append((np.array(dwt_feature_stack), avg_adj))
                     self.labels.append(label)
-            else:
+            else:  # Default is 'cnn'
                 for epoch_item in processed_epochs:
                     epoch_data = epoch_item
                     self.data.append(epoch_data)
@@ -115,7 +121,7 @@ class CustomEEGDataset(Dataset):
         data_point = self.data[idx]
         label = self.labels[idx]
 
-        if self.model_type == "cnn":
+        if self.model_type in ["cnn", "vit"]:
             return torch.FloatTensor(data_point), torch.tensor(label, dtype=torch.long)
 
         elif self.model_type == "mha_gcn":
@@ -162,7 +168,7 @@ def train_model(
                 # Keep inputs as a tuple of (dwt, adj) as required by the model
                 inputs = (dwt.to(DEVICE), adj.to(DEVICE))
                 labels = labels.to(DEVICE)
-            else:
+            else: # Covers 'cnn', 'vit', and any other standard model
                 inputs, labels = data
                 # Handle inputs which could be a tensor or a tuple of tensors
                 if isinstance(inputs, tuple):
@@ -214,7 +220,7 @@ def evaluate_model(
             if model_type == "mha_gcn":
                 dwt, adj, labels = data
                 inputs = (dwt.to(DEVICE), adj.to(DEVICE))
-            else:
+            else: # Covers 'cnn', 'vit', and any other standard model
                 inputs, labels = data
                 # Handle inputs which could be a tensor or a tuple of tensors
                 if isinstance(inputs, tuple):
