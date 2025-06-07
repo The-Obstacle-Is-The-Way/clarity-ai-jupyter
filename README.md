@@ -114,7 +114,7 @@ pip install -r requirements.txt
 
 ### 3. Download the MODMA Dataset
 You must request access to the MODMA dataset directly from the researchers.
--   **Register and request access** at the [official dataset portal](http://modma.lzu.edu.cn/data_sources/sharing/).
+-   **Register and request access** at the [official dataset portal](https://modma.lzu.edu.cn/data/index/).
 -   Once you receive the download link, place and unpack the archive in the `data/` directory.
 -   The expected file structure is `data/MODMA/EEG_128channel_resting/sub01/rest.set`.
 

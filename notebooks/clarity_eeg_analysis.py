@@ -10,7 +10,7 @@
 # %% [markdown]
 # # Psychiatry Digital Twin - EEG Analysis Pipeline
 #
-# This notebook implements an end-to-end analysis pipeline for the [MODMA dataset](http://modma.lzu.edu.cn/data_sources/sharing/), focusing on classifying multiple levels of depression severity from resting-state EEG signals.
+# This notebook implements an end-to-end analysis pipeline for the [MODMA dataset](https://modma.lzu.edu.cn/data/index/), focusing on classifying multiple levels of depression severity from resting-state EEG signals.
 #
 # **Objective:** To compare the performance of several deep learning architectures using a robust Leave-One-Out Cross-Validation (LOOCV) strategy.
 #
