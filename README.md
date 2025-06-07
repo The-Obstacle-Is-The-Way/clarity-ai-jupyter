@@ -19,11 +19,11 @@ The repository is designed around a modular pipeline that takes raw EEG data and
 
 ```mermaid
 graph TD
-    A[<B>MODMA Dataset</B><br/>Raw EEG (.set files)] --> B{<B>1. Preprocessing</B><br/>- Band-pass Filtering<br/>- Artifact Removal (ICA)<br/>- Channel Selection};
-    B --> C{<B>2. Feature Engineering</B><br/>- Differential Entropy (DE)<br/>- Discrete Wavelet Transform (DWT)<br/>- Adjacency Matrices (Connectivity)};
-    C --> D[<B>3. Model Training</B><br/>- BaselineCNN<br/>- MHA-GCN (Graph)<br/>- EEGNet<br/>- SpectrogramViT];
-    D --> E{<B>4. Evaluation</B><br/>Leave-One-Out CV<br/>Accuracy, F1-Score<br/>Confusion Matrix};
-    E --> F[<B>5. Interpretation</B><br/>- Topomaps<br/>- GCN Attention<br/>- Statistical Tests];
+    A["MODMA Dataset<br/>Raw EEG (.set files)"] --> B{"1. Preprocessing<br/>- Band-pass Filtering<br/>- Artifact Removal (ICA)<br/>- Channel Selection"}
+    B --> C{"2. Feature Engineering<br/>- Differential Entropy (DE)<br/>- Discrete Wavelet Transform (DWT)<br/>- Adjacency Matrices (Connectivity)"}
+    C --> D["3. Model Training<br/>- BaselineCNN<br/>- MHA-GCN (Graph)<br/>- EEGNet<br/>- SpectrogramViT"]
+    D --> E{"4. Evaluation<br/>Leave-One-Out CV<br/>Accuracy, F1-Score<br/>Confusion Matrix"}
+    E --> F["5. Interpretation<br/>- Topomaps<br/>- GCN Attention<br/>- Statistical Tests"]
 ```
 
 ---
