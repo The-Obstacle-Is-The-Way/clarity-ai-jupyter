@@ -89,20 +89,30 @@ The `src/clarity` package separates concerns into logical modules, making the co
 
 ```mermaid
 graph TD
-    subgraph src/clarity
-        A["data<br/>- modma.py<br/>- caching.py"]
-        B["features<br/>- features.py"]
-        C["models<br/>- baseline_cnn.py<br/>- mha_gcn.py<br/>- eegnet.py"]
-        D["training<br/>- config.py<br/>- loop.py"]
+    subgraph "src/clarity Package"
+        A["📁 data/<br/>━━━━━━━━━━━<br/>modma.py<br/>• Data loading<br/>• Preprocessing<br/>• Segmentation<br/><br/>caching.py<br/>• Speed optimization"]
+        
+        B["📁 features/<br/>━━━━━━━━━━━<br/>features.py<br/>• DE (5 bands)<br/>• DWT (15 features)<br/>• STFT spectrograms<br/>• Graph adjacency"]
+        
+        C["📁 models/<br/>━━━━━━━━━━━<br/>baseline_cnn.py<br/>mha_gcn.py<br/>eegnet.py<br/>eeg_vit.py"]
+        
+        D["📁 training/<br/>━━━━━━━━━━━<br/>config.py<br/>• Hyperparameters<br/>• Dataset paths<br/><br/>loop.py<br/>• LOOCV logic<br/>• Train/eval functions"]
     end
 
-    E["notebooks/clarity_eeg_analysis.py<br/>Main Experiment Script"]
+    E["📓 notebooks/<br/>clarity_eeg_analysis.py<br/>━━━━━━━━━━━<br/>Main experiment runner<br/>with visualization"]
 
-    E --> A
-    A --> B
-    B --> C
-    C --> D
-    D --> E
+    E -.->|"imports & uses"| A
+    E -.->|"configures"| D
+    A -->|"raw data"| B
+    B -->|"features"| D
+    D -->|"trains"| C
+    C -->|"predictions"| E
+    
+    style A fill:#fff3e0
+    style B fill:#f3e5f5
+    style C fill:#e8f5e9
+    style D fill:#fce4ec
+    style E fill:#e1f5fe
 ```
 
 ---
