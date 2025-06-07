@@ -61,13 +61,13 @@ The `src/clarity` package separates concerns into logical modules, making the co
 ```mermaid
 graph TD
     subgraph src/clarity
-        A[<B>data</B><br/>- modma.py<br/>- caching.py]
-        B[<B>features</B><br/>- features.py]
-        C[<B>models</B><br/>- baseline_cnn.py<br/>- mha_gcn.py<br/>- eegnet.py]
-        D[<B>training</B><br/>- config.py<br/>- loop.py]
+        A["data<br/>- modma.py<br/>- caching.py"]
+        B["features<br/>- features.py"]
+        C["models<br/>- baseline_cnn.py<br/>- mha_gcn.py<br/>- eegnet.py"]
+        D["training<br/>- config.py<br/>- loop.py"]
     end
 
-    E[<B>notebooks/clarity_eeg_analysis.py</B><br/>Main Experiment Script]
+    E["notebooks/clarity_eeg_analysis.py<br/>Main Experiment Script"]
 
     E --> A
     A --> B
