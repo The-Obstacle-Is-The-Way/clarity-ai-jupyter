@@ -19,11 +19,38 @@ The repository is designed around a modular pipeline that takes raw EEG data and
 
 ```mermaid
 graph TD
-    A["MODMA Dataset<br/>Raw EEG (.set files)"] --> B{"1. Preprocessing<br/>- Band-pass Filtering<br/>- Artifact Removal (ICA)<br/>- Channel Selection"}
-    B --> C{"2. Feature Engineering<br/>- Differential Entropy (DE)<br/>- Discrete Wavelet Transform (DWT)<br/>- Adjacency Matrices (Connectivity)"}
-    C --> D["3. Model Training<br/>- BaselineCNN<br/>- MHA-GCN (Graph)<br/>- EEGNet<br/>- SpectrogramViT"]
-    D --> E{"4. Evaluation<br/>Leave-One-Out CV<br/>Accuracy, F1-Score<br/>Confusion Matrix"}
-    E --> F["5. Interpretation<br/>- Topomaps<br/>- GCN Attention<br/>- Statistical Tests"]
+    A["MODMA Dataset<br/>Raw EEG (.set files)"] --> B[Preprocessing]
+    B --> B1["Band-pass Filtering"]
+    B --> B2["Artifact Removal (ICA)"]
+    B --> B3["Channel Selection"]
+    
+    B1 --> C[Feature Engineering]
+    B2 --> C
+    B3 --> C
+    
+    C --> C1["Differential Entropy"]
+    C --> C2["DWT"]
+    C --> C3["Adjacency Matrices"]
+    
+    C1 --> D[Model Training]
+    C2 --> D
+    C3 --> D
+    
+    D --> D1["BaselineCNN"]
+    D --> D2["MHA-GCN"]
+    D --> D3["EEGNet"]
+    D --> D4["SpectrogramViT"]
+    
+    D1 --> E[Evaluation]
+    D2 --> E
+    D3 --> E
+    D4 --> E
+    
+    E --> E1["LOOCV"]
+    E --> E2["Metrics"]
+    
+    E1 --> F[Interpretation]
+    E2 --> F
 ```
 
 ---
