@@ -2,6 +2,8 @@
 
 *An open-source initiative to build a "Psychiatry Digital Twin" by decoding brain signals to better understand and classify Major Depressive Disorder (MDD).*
 
+> **License Compliance Note:** All analyses on MODMA data will remain strictly academic and non-commercial, in full compliance with the dataset's EULA. Any future commercial work will rely on separately licensed or proprietary data sources.
+
 <p align="center">
   <img alt="Python" src="https://img.shields.io/badge/Python-3.10+-blue?logo=python&logoColor=white">
   <img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-2.0+-ee4c2c?logo=pytorch&logoColor=white">
