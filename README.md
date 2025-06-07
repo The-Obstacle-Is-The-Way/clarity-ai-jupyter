@@ -108,11 +108,11 @@ graph TD
     D -->|"trains"| C
     C -->|"predictions"| E
     
-    style A fill:#fff3e0
-    style B fill:#f3e5f5
-    style C fill:#e8f5e9
-    style D fill:#fce4ec
-    style E fill:#e1f5fe
+    style A fill:#e6994d
+    style B fill:#b565d8
+    style C fill:#66a266
+    style D fill:#e66b8f
+    style E fill:#5c9dd6
 ```
 
 ---
