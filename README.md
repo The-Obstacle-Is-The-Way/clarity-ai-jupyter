@@ -141,11 +141,12 @@ This sandbox is an active project. Our roadmap is focused on pushing the boundar
 
 ---
 
+
 ## License and Terms of Use
 
 This project is intended for **academic and non-commercial research purposes only**.
 
-The [MODMA dataset](http://modma.lzu.edu.cn/data_sources/sharing/) used in this research is subject to its own End User License Agreement (EULA). Users of this codebase are responsible for obtaining the dataset themselves and adhering to all of its terms, which strictly prohibit commercial use.
+The [MODMA dataset](https://modma.lzu.edu.cn/data/index/) used in this research is subject to its own End User License Agreement (EULA). Users of this codebase are responsible for obtaining the dataset themselves and adhering to all of its terms, which strictly prohibit commercial use.
 
 ---
 
